@@ -59,7 +59,7 @@ internal fun ChatComposer(
             Column(modifier = Modifier.padding(start = 14.dp, top = 13.dp, end = 10.dp, bottom = 9.dp)) {
                 Box(modifier = Modifier.fillMaxWidth().heightIn(min = 42.dp, max = 150.dp)) {
                     if (value.isEmpty()) {
-                        Text("Type or hold to talk", color = Muted, fontSize = 17.sp)
+                        Text("Type a message", color = Muted, fontSize = 17.sp)
                     }
                     BasicTextField(
                         value = value,
@@ -80,10 +80,10 @@ internal fun ChatComposer(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    TextButton(onClick = onModelPicker, enabled = enabled, shape = CircleShape) {
+                    TextButton(onClick = onModelPicker, enabled = enabled && !isGenerating, shape = CircleShape) {
                         Text(model.displayName, color = Paper, maxLines = 1)
                     }
-                    TextButton(onClick = onEffortPicker, enabled = enabled, shape = CircleShape) {
+                    TextButton(onClick = onEffortPicker, enabled = enabled && !isGenerating, shape = CircleShape) {
                         Text(effort.displayName, color = Muted)
                     }
                     Box(modifier = Modifier.weight(1f))

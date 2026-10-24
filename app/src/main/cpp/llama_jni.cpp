@@ -202,6 +202,119 @@ bool appendTokenPiece(
     return flushCompleteText(env, listener, method, pending);
 }
 
+bool readMessages(
+    JNIEnv *env,
+    jobjectArray roleArray,
+    jobjectArray contentArray,
+    std::vector<std::string> &roles,
+    std::vector<std::string> &contents
+) {
+    if (roleArray == nullptr || contentArray == nullptr) {
+        throwIllegalState(env, "Prompt message arrays are missing");
+        return false;
+    }
+    const jsize messageCount = env->GetArrayLength(roleArray);
+    if (messageCount != env->GetArrayLength(contentArray) || messageCount == 0) {
+        throwIllegalState(env, "The prompt message list is empty or malformed");
+        return false;
+    }
+
+    roles.clear();
+    contents.clear();
+    roles.reserve(static_cast<size_t>(messageCount));
+    contents.reserve(static_cast<size_t>(messageCount));
+    for (jsize index = 0; index < messageCount; ++index) {
+        auto role = static_cast<jstring>(env->GetObjectArrayElement(roleArray, index));
+        auto content = static_cast<jstring>(env->GetObjectArrayElement(contentArray, index));
+        if (env->ExceptionCheck()) {
+            if (role != nullptr) env->DeleteLocalRef(role);
+            if (content != nullptr) env->DeleteLocalRef(content);
+            return false;
+        }
+        roles.push_back(javaStringToUtf8(env, role));
+        contents.push_back(javaStringToUtf8(env, content));
+        if (role != nullptr) env->DeleteLocalRef(role);
+        if (content != nullptr) env->DeleteLocalRef(content);
+        if (env->ExceptionCheck()) return false;
+    }
+    return true;
+}
+
+bool formatPrompt(
+    JNIEnv *env,
+    const llama_model *model,
+    const std::vector<std::string> &roles,
+    const std::vector<std::string> &contents,
+    std::vector<char> &formatted,
+    int32_t &formattedLength
+) {
+    std::vector<llama_chat_message> messages;
+    messages.reserve(roles.size());
+    size_t characterCount = 0;
+    for (size_t index = 0; index < roles.size(); ++index) {
+        characterCount += roles[index].size() + contents[index].size();
+        messages.push_back({roles[index].c_str(), contents[index].c_str()});
+    }
+
+    const char *templateText = llama_model_chat_template(model, nullptr);
+    if (templateText == nullptr) {
+        throwIllegalState(env, "The model does not contain a chat template");
+        return false;
+    }
+    formatted.assign(std::max<size_t>(1024, characterCount * 2 + 512), '\0');
+    formattedLength = llama_chat_apply_template(
+        templateText,
+        messages.data(),
+        messages.size(),
+        true,
+        formatted.data(),
+        static_cast<int32_t>(formatted.size())
+    );
+    if (formattedLength < 0) {
+        throwIllegalState(env, "The model does not support its embedded chat template");
+        return false;
+    }
+    if (static_cast<size_t>(formattedLength) > formatted.size()) {
+        formatted.resize(static_cast<size_t>(formattedLength));
+        formattedLength = llama_chat_apply_template(
+            templateText,
+            messages.data(),
+            messages.size(),
+            true,
+            formatted.data(),
+            static_cast<int32_t>(formatted.size())
+        );
+    }
+    if (formattedLength < 0) {
+        throwIllegalState(env, "Failed to format the conversation with the model chat template");
+        return false;
+    }
+    return true;
+}
+
+bool tokenizePrompt(
+    JNIEnv *env,
+    const llama_model *model,
+    const std::vector<char> &formatted,
+    int32_t formattedLength,
+    std::vector<llama_token> &tokens
+) {
+    const llama_vocab *vocab = llama_model_get_vocab(model);
+    const int32_t requiredTokens = -llama_tokenize(vocab, formatted.data(), formattedLength, nullptr, 0, true, true);
+    if (requiredTokens <= 0) {
+        throwIllegalState(env, "llama.cpp could not tokenize the conversation");
+        return false;
+    }
+    tokens.resize(static_cast<size_t>(requiredTokens));
+    const int32_t tokenCount = llama_tokenize(vocab, formatted.data(), formattedLength, tokens.data(), requiredTokens, true, true);
+    if (tokenCount < 0) {
+        throwIllegalState(env, "llama.cpp could not tokenize the conversation");
+        return false;
+    }
+    tokens.resize(static_cast<size_t>(tokenCount));
+    return true;
+}
+
 } // namespace
 
 extern "C" JNIEXPORT jlong JNICALL
@@ -252,6 +365,34 @@ Java_dev_infinitetokens_inference_NativeLlama_beginGeneration(JNIEnv *, jobject,
     return JNI_TRUE;
 }
 
+extern "C" JNIEXPORT jint JNICALL
+Java_dev_infinitetokens_inference_NativeLlama_countPromptTokens(
+    JNIEnv *env,
+    jobject,
+    jlong handle,
+    jobjectArray roleArray,
+    jobjectArray contentArray
+) {
+    const auto state = findState(handle);
+    if (state == nullptr) {
+        throwIllegalState(env, "The local model is not loaded");
+        return 0;
+    }
+    std::lock_guard<std::mutex> generationLock(state->generationMutex);
+
+    std::vector<std::string> roles;
+    std::vector<std::string> contents;
+    if (!readMessages(env, roleArray, contentArray, roles, contents)) return 0;
+
+    std::vector<char> formatted;
+    int32_t formattedLength = 0;
+    if (!formatPrompt(env, state->model, roles, contents, formatted, formattedLength)) return 0;
+
+    std::vector<llama_token> tokens;
+    if (!tokenizePrompt(env, state->model, formatted, formattedLength, tokens)) return 0;
+    return static_cast<jint>(tokens.size());
+}
+
 extern "C" JNIEXPORT void JNICALL
 Java_dev_infinitetokens_inference_NativeLlama_generate(
     JNIEnv *env,
@@ -270,25 +411,9 @@ Java_dev_infinitetokens_inference_NativeLlama_generate(
     std::unique_lock<std::mutex> generationLock(state->generationMutex);
     if (state->cancelled.load()) return;
 
-    const jsize messageCount = env->GetArrayLength(roleArray);
-    if (messageCount != env->GetArrayLength(contentArray) || messageCount == 0) {
-        throwIllegalState(env, "The prompt message list is empty or malformed");
-        return;
-    }
-
     std::vector<std::string> roles;
     std::vector<std::string> contents;
-    roles.reserve(static_cast<size_t>(messageCount));
-    contents.reserve(static_cast<size_t>(messageCount));
-    for (jsize index = 0; index < messageCount; ++index) {
-        auto role = static_cast<jstring>(env->GetObjectArrayElement(roleArray, index));
-        auto content = static_cast<jstring>(env->GetObjectArrayElement(contentArray, index));
-        roles.push_back(javaStringToUtf8(env, role));
-        contents.push_back(javaStringToUtf8(env, content));
-        env->DeleteLocalRef(role);
-        env->DeleteLocalRef(content);
-        if (env->ExceptionCheck()) return;
-    }
+    if (!readMessages(env, roleArray, contentArray, roles, contents)) return;
 
     jclass listenerClass = env->GetObjectClass(listener);
     const jmethodID onToken = listenerClass == nullptr ? nullptr : env->GetMethodID(listenerClass, "onToken", "(Ljava/lang/String;)V");
@@ -298,42 +423,14 @@ Java_dev_infinitetokens_inference_NativeLlama_generate(
         return;
     }
 
-    std::vector<llama_chat_message> messages;
-    messages.reserve(static_cast<size_t>(messageCount));
-    size_t characterCount = 0;
-    for (jsize index = 0; index < messageCount; ++index) {
-        characterCount += roles[index].size() + contents[index].size();
-        messages.push_back({roles[index].c_str(), contents[index].c_str()});
-    }
+    std::vector<char> formatted;
+    int32_t formattedLength = 0;
+    if (!formatPrompt(env, state->model, roles, contents, formatted, formattedLength)) return;
 
-    const char *templateText = llama_model_chat_template(state->model, nullptr);
-    std::vector<char> formatted(std::max<size_t>(1024, characterCount * 2 + 512));
-    int32_t formattedLength = llama_chat_apply_template(templateText, messages.data(), messages.size(), true, formatted.data(), static_cast<int32_t>(formatted.size()));
-    if (formattedLength < 0) {
-        throwIllegalState(env, "The model does not support its embedded chat template");
-        return;
-    }
-    if (static_cast<size_t>(formattedLength) > formatted.size()) {
-        formatted.resize(static_cast<size_t>(formattedLength));
-        formattedLength = llama_chat_apply_template(templateText, messages.data(), messages.size(), true, formatted.data(), static_cast<int32_t>(formatted.size()));
-    }
-    if (formattedLength < 0) {
-        throwIllegalState(env, "Failed to format the conversation with the model chat template");
-        return;
-    }
-
+    std::vector<llama_token> promptTokens;
+    if (!tokenizePrompt(env, state->model, formatted, formattedLength, promptTokens)) return;
+    const int32_t promptTokenCount = static_cast<int32_t>(promptTokens.size());
     const llama_vocab *vocab = llama_model_get_vocab(state->model);
-    const int32_t requiredTokens = -llama_tokenize(vocab, formatted.data(), formattedLength, nullptr, 0, true, true);
-    if (requiredTokens <= 0) {
-        throwIllegalState(env, "llama.cpp could not tokenize the conversation");
-        return;
-    }
-    std::vector<llama_token> promptTokens(static_cast<size_t>(requiredTokens));
-    const int32_t promptTokenCount = llama_tokenize(vocab, formatted.data(), formattedLength, promptTokens.data(), requiredTokens, true, true);
-    if (promptTokenCount < 0) {
-        throwIllegalState(env, "llama.cpp could not tokenize the conversation");
-        return;
-    }
 
     const uint32_t contextSize = llama_n_ctx(state->context);
     const uint32_t generationSize = static_cast<uint32_t>(std::max(1, static_cast<int>(maxNewTokens)));
@@ -343,19 +440,37 @@ Java_dev_infinitetokens_inference_NativeLlama_generate(
     }
 
     llama_memory_clear(llama_get_memory(state->context), true);
-    llama_batch batch = llama_batch_init(promptTokenCount, 0, 1);
-    batch.n_tokens = promptTokenCount;
-    for (int32_t index = 0; index < promptTokenCount; ++index) {
-        batch.token[index] = promptTokens[static_cast<size_t>(index)];
-        batch.pos[index] = index;
-        batch.n_seq_id[index] = 1;
-        batch.seq_id[index][0] = 0;
-        batch.logits[index] = index == promptTokenCount - 1;
-    }
-    if (llama_decode(state->context, batch) != 0) {
-        llama_batch_free(batch);
-        throwIllegalState(env, "llama.cpp failed to evaluate the conversation");
+    const int32_t batchCapacity = static_cast<int32_t>(llama_n_batch(state->context));
+    if (batchCapacity <= 0) {
+        throwIllegalState(env, "llama.cpp returned an invalid batch size");
         return;
+    }
+    llama_batch batch = llama_batch_init(std::min(promptTokenCount, batchCapacity), 0, 1);
+    if (batch.token == nullptr || batch.pos == nullptr || batch.n_seq_id == nullptr || batch.seq_id == nullptr || batch.logits == nullptr) {
+        llama_batch_free(batch);
+        throwIllegalState(env, "llama.cpp could not allocate the prompt batch");
+        return;
+    }
+    for (int32_t offset = 0; offset < promptTokenCount; offset += batchCapacity) {
+        if (state->cancelled.load()) {
+            llama_batch_free(batch);
+            return;
+        }
+        const int32_t tokensInBatch = std::min(batchCapacity, promptTokenCount - offset);
+        batch.n_tokens = tokensInBatch;
+        for (int32_t index = 0; index < tokensInBatch; ++index) {
+            const int32_t position = offset + index;
+            batch.token[index] = promptTokens[static_cast<size_t>(position)];
+            batch.pos[index] = position;
+            batch.n_seq_id[index] = 1;
+            batch.seq_id[index][0] = 0;
+            batch.logits[index] = position == promptTokenCount - 1;
+        }
+        if (llama_decode(state->context, batch) != 0) {
+            llama_batch_free(batch);
+            throwIllegalState(env, "llama.cpp failed to evaluate the conversation");
+            return;
+        }
     }
 
     llama_sampler *sampler = llama_sampler_chain_init(llama_sampler_chain_default_params());

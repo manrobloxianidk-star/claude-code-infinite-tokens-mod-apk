@@ -32,6 +32,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## KleidiAI
+
+The `arm64-v8a` build includes Arm KleidiAI v1.31.0 microkernels through llama.cpp's CPU backend. KleidiAI is licensed under Apache-2.0. Its upstream source and license are available at [ARM-software/kleidiai](https://github.com/ARM-software/kleidiai/tree/v1.31.0); the license text is also included in this repository's `LICENSE` file.
+
+Copyright © 2024–2026 Arm Limited and/or its affiliates.
+
 ## Application source
 
 The Infinite Tokens 2026 application source code is licensed under Apache License 2.0; see [LICENSE](LICENSE).

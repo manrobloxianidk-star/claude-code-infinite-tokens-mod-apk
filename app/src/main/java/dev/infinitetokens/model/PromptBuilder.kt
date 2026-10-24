@@ -3,7 +3,6 @@ package dev.infinitetokens.model
 object PromptBuilder {
     private const val CONTEXT_WINDOW_TOKENS = 4096
     private const val DEFAULT_REPLY_TOKENS = 512
-    private const val TOKEN_BYTES_DIVISOR = 2
 
     fun systemPrompt(level: ChaosLevel): String = buildString {
         append("Ты — локальный помощник для чатов и программирования. Отвечай на русском языке, если пользователь явно не попросил другой язык. ")
@@ -11,43 +10,41 @@ object PromptBuilder {
         level.chaosInstruction?.let(::append)
     }
 
-    fun assembleContext(
+    suspend fun assembleContext(
         level: ChaosLevel,
         history: List<PromptMessage>,
+        countTokens: suspend (List<PromptMessage>) -> Int,
         maxContextTokens: Int = CONTEXT_WINDOW_TOKENS,
         maxReplyTokens: Int = DEFAULT_REPLY_TOKENS,
     ): List<PromptMessage> {
         val system = PromptMessage("system", systemPrompt(level))
         val budget = (maxContextTokens - maxReplyTokens).coerceAtLeast(1)
         val context = history.toMutableList()
+        suspend fun exceedsBudget(): Boolean = countTokens(listOf(system) + context) > budget
 
-        while (context.size > 1 && estimateTokens(listOf(system) + context) > budget) {
+        while (context.size > 1 && exceedsBudget()) {
             context.removeAt(0)
         }
-        if (context.isNotEmpty() && estimateTokens(listOf(system) + context) > budget) {
+        if (context.isNotEmpty() && exceedsBudget()) {
             val last = context.last()
-            val otherCost = estimateTokens(listOf(system)) + estimateTokens(listOf(last.copy(content = "")))
-            val contentBudget = (budget - otherCost).coerceAtLeast(0) * TOKEN_BYTES_DIVISOR
-            context[context.lastIndex] = last.copy(content = keepUtf8Suffix(last.content, contentBudget))
+            val codePointCount = last.content.codePointCount(0, last.content.length)
+            var low = 0
+            var high = codePointCount
+            var best = last.copy(content = "")
+            while (low <= high) {
+                val keepCount = (low + high) ushr 1
+                val start = last.content.offsetByCodePoints(0, codePointCount - keepCount)
+                val candidate = last.copy(content = last.content.substring(start))
+                context[context.lastIndex] = candidate
+                if (countTokens(listOf(system) + context) <= budget) {
+                    best = candidate
+                    low = keepCount + 1
+                } else {
+                    high = keepCount - 1
+                }
+            }
+            context[context.lastIndex] = best
         }
         return listOf(system) + context
-    }
-
-    private fun estimateTokens(messages: List<PromptMessage>): Int = messages.sumOf { message ->
-        4 + (message.role.toByteArray(Charsets.UTF_8).size + message.content.toByteArray(Charsets.UTF_8).size + TOKEN_BYTES_DIVISOR - 1) / TOKEN_BYTES_DIVISOR
-    }
-
-    private fun keepUtf8Suffix(value: String, maxBytes: Int): String {
-        if (maxBytes <= 0) return ""
-        var start = value.length
-        var bytes = 0
-        while (start > 0) {
-            val codePointStart = if (start >= 2 && value[start - 1].isLowSurrogate() && value[start - 2].isHighSurrogate()) start - 2 else start - 1
-            val nextBytes = value.substring(codePointStart, start).toByteArray(Charsets.UTF_8).size
-            if (bytes + nextBytes > maxBytes) break
-            bytes += nextBytes
-            start = codePointStart
-        }
-        return value.substring(start)
     }
 }

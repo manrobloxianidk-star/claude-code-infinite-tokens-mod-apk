@@ -25,7 +25,12 @@ class ModelAssetInstaller(context: Context) {
         }
 
         val modelFile = File(modelDirectory, MODEL_FILE_NAME)
-        if (modelFile.isFile && modelFile.length() == EXPECTED_BYTES) return@withContext modelFile
+        if (modelFile.exists()) {
+            if (modelFile.isFile && modelFile.length() == EXPECTED_BYTES && sha256(modelFile, onProgress) == EXPECTED_SHA256) {
+                return@withContext modelFile
+            }
+            if (!modelFile.delete()) throw IOException("Could not replace the invalid local model file")
+        }
 
         val partialFile = File(modelDirectory, "$MODEL_FILE_NAME.partial")
         partialFile.delete()
@@ -35,6 +40,7 @@ class ModelAssetInstaller(context: Context) {
                 FileOutputStream(partialFile).use { output ->
                     val buffer = ByteArray(COPY_BUFFER_SIZE)
                     var copied = 0L
+                    var lastReported = 0L
                     onProgress(ModelInstallProgress(copied, EXPECTED_BYTES))
                     while (true) {
                         val read = input.read(buffer)
@@ -42,7 +48,10 @@ class ModelAssetInstaller(context: Context) {
                         output.write(buffer, 0, read)
                         digest.update(buffer, 0, read)
                         copied += read
-                        onProgress(ModelInstallProgress(copied, EXPECTED_BYTES))
+                        if (copied - lastReported >= PROGRESS_INTERVAL_BYTES || copied == EXPECTED_BYTES) {
+                            onProgress(ModelInstallProgress(copied, EXPECTED_BYTES))
+                            lastReported = copied
+                        }
                     }
                     output.fd.sync()
                 }
@@ -66,11 +75,34 @@ class ModelAssetInstaller(context: Context) {
         }
     }
 
+    private fun sha256(file: File, onProgress: (ModelInstallProgress) -> Unit): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val total = file.length()
+        file.inputStream().buffered().use { input ->
+            val buffer = ByteArray(COPY_BUFFER_SIZE)
+            var processed = 0L
+            var lastReported = 0L
+            onProgress(ModelInstallProgress(0L, total))
+            while (true) {
+                val read = input.read(buffer)
+                if (read < 0) break
+                digest.update(buffer, 0, read)
+                processed += read
+                if (processed - lastReported >= PROGRESS_INTERVAL_BYTES || processed == total) {
+                    onProgress(ModelInstallProgress(processed, total))
+                    lastReported = processed
+                }
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
     private companion object {
         const val ASSET_PATH = "models/SmolLM2-135M-Instruct-Q4_K_M.gguf"
         const val MODEL_FILE_NAME = "SmolLM2-135M-Instruct-Q4_K_M.gguf"
         const val EXPECTED_BYTES = 105_454_432L
         const val EXPECTED_SHA256 = "2e8040ceae7815abe0dcb3540b9995eaa1fa0d2ca9e797d0a635ae4433c68c2d"
         const val COPY_BUFFER_SIZE = 128 * 1024
+        const val PROGRESS_INTERVAL_BYTES = 1024 * 1024L
     }
 }

@@ -52,7 +52,7 @@ scripts/fetch-model.sh
 
 Set `ANDROID_HOME` and `ANDROID_SDK_ROOT` if the SDK is not in the standard location. The verified model asset is ignored by Git and is not stored in the source history. The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 
-The build pins llama.cpp commit `620d2225cc436ab0b001e3200e590e3b286ef9ab`. Its archive SHA-256 is checked during CMake configuration. Gradle pins the Android, Kotlin, Compose, Room, and KSP versions in `gradle/libs.versions.toml` and the build files.
+The build pins llama.cpp commit `620d2225cc436ab0b001e3200e590e3b286ef9ab`. Its archive SHA-256 is checked during CMake configuration. The `arm64-v8a` build also includes the llama.cpp-selected KleidiAI v1.31.0 CPU kernels. Gradle pins the Android, Kotlin, Compose, Room, and KSP versions in `gradle/libs.versions.toml` and the build files.
 
 ## Model source and integrity
 

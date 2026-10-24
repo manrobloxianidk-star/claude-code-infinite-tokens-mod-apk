@@ -9,6 +9,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
@@ -18,6 +21,7 @@ import kotlinx.coroutines.withContext
 
 interface LocalInferenceEngine {
     suspend fun load(modelFile: File)
+    suspend fun countPromptTokens(messages: List<PromptMessage>): Int
     fun generate(messages: List<PromptMessage>, maxNewTokens: Int = 512): Flow<String>
     fun cancel()
     fun close()
@@ -32,17 +36,43 @@ class LlamaCppInferenceEngine(
     private val loadingMutex = Mutex()
     private val generationActive = AtomicBoolean(false)
     private val nativeControlLock = Any()
+    @Volatile
+    private var closed = false
 
     override suspend fun load(modelFile: File) = withContext(Dispatchers.IO) {
         loadingMutex.withLock {
+            synchronized(nativeControlLock) {
+                if (closed) throw CancellationException("The local inference engine is closed")
+            }
             if (nativeHandle.get() != 0L) return@withLock
             if (!modelFile.exists() || !modelFile.isFile || !modelFile.canRead()) {
                 throw IOException("Local model file is missing or unreadable")
             }
             val handle = NativeLlama.loadModel(modelFile.absolutePath, contextTokens)
             if (handle == 0L) throw IOException("llama.cpp could not load the local model")
-            nativeHandle.set(handle)
+            try {
+                val coroutineContext = currentCoroutineContext()
+                coroutineContext.ensureActive()
+                synchronized(nativeControlLock) {
+                    coroutineContext.ensureActive()
+                    if (closed) throw CancellationException("The local inference engine is closed")
+                    nativeHandle.set(handle)
+                }
+            } catch (error: Throwable) {
+                NativeLlama.close(handle)
+                throw error
+            }
         }
+    }
+
+    override suspend fun countPromptTokens(messages: List<PromptMessage>): Int = withContext(Dispatchers.IO) {
+        val handle = nativeHandle.get()
+        if (handle == 0L) throw IOException("The local model has not been loaded")
+        NativeLlama.countPromptTokens(
+            handle,
+            messages.map(PromptMessage::role).toTypedArray(),
+            messages.map(PromptMessage::content).toTypedArray(),
+        )
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -106,6 +136,7 @@ class LlamaCppInferenceEngine(
 
     override fun close() {
         synchronized(nativeControlLock) {
+            closed = true
             nativeHandle.get().takeIf { it != 0L }?.let(NativeLlama::cancel)
             nativeHandle.getAndSet(0L).takeIf { it != 0L }?.let(NativeLlama::close)
         }

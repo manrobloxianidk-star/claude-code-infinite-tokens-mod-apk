@@ -17,8 +17,12 @@ import dev.infinitetokens.model.AppSection
 import dev.infinitetokens.model.ChaosLevel
 import dev.infinitetokens.model.ModelAlias
 import dev.infinitetokens.model.PromptBuilder
-import dev.infinitetokens.model.PromptMessage
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,6 +30,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 data class ChatUiState(
     val section: AppSection = AppSection.CHAT,
@@ -51,10 +56,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val installer = ModelAssetInstaller(application)
     private val inference: LocalInferenceEngine = LlamaCppInferenceEngine()
     private val modelMutex = Mutex()
+    private val preferences = application.getSharedPreferences(PREFERENCES_NAME, Application.MODE_PRIVATE)
     private val _state = MutableStateFlow(ChatUiState())
     val state: StateFlow<ChatUiState> = _state.asStateFlow()
 
     private var messagesJob: Job? = null
+    private var sendJob: Job? = null
+    private var sendPhase = SendPhase.PREPARING
     private var initialChatHandled = false
 
     init {
@@ -73,7 +81,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 _state.update { it.copy(recentChats = rows) }
                 if (!initialChatHandled) {
                     initialChatHandled = true
-                    val firstChat = rows.firstOrNull()
+                    val lastOpenedId = preferences.getString(KEY_LAST_OPENED_CHAT, null)
+                    val firstChat = rows.firstOrNull { it.id == lastOpenedId } ?: rows.firstOrNull()
                     if (firstChat == null) createNewChat() else selectChat(firstChat.id)
                 } else if (_state.value.activeChat?.let { active -> rows.none { it.id == active.id } } == true) {
                     rows.firstOrNull()?.let { selectChat(it.id) }
@@ -84,6 +93,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun showSection(section: AppSection) {
+        if (section != AppSection.CHAT) stopSendForNavigation()
         _state.update { it.copy(section = section, activeProject = if (section == AppSection.PROJECTS) null else it.activeProject) }
     }
 
@@ -91,18 +101,18 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val chat = chats.getChat(id) ?: return@launch
             val previousChatId = _state.value.activeChat?.id
-            if (previousChatId != null && previousChatId != id && _state.value.isGenerating) inference.cancel()
+            if (previousChatId != null && previousChatId != id) stopSendForNavigation()
             messagesJob?.cancel()
             _state.update {
                 it.copy(
                     section = AppSection.CHAT,
                     activeChat = chat,
                     messages = emptyList(),
-                    isGenerating = if (previousChatId != id) false else it.isGenerating,
                     streamingResponse = "",
                     generationError = null,
                 )
             }
+            preferences.edit().putString(KEY_LAST_OPENED_CHAT, id).apply()
             messagesJob = viewModelScope.launch {
                 chats.observeMessages(id).collect { rows -> _state.update { it.copy(messages = rows) } }
             }
@@ -122,12 +132,14 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     fun openProject(id: String) {
         val project = _state.value.projects.firstOrNull { it.id == id } ?: return
+        stopSendForNavigation()
         _state.update { it.copy(section = AppSection.PROJECT, activeProject = project) }
     }
 
     fun createProject(name: String) {
         viewModelScope.launch {
             val project = projects.createProject(name)
+            stopSendForNavigation()
             _state.update { it.copy(section = AppSection.PROJECT, activeProject = project) }
         }
     }
@@ -171,6 +183,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             _state.update { it.copy(copiedBytes = file.length(), totalBytes = file.length()) }
             inference.load(file)
             _state.update { it.copy(modelLoading = false, modelReady = true, modelError = null) }
+        } catch (error: CancellationException) {
+            _state.update { it.copy(modelLoading = false) }
+            throw error
         } catch (error: Exception) {
             _state.update { it.copy(modelLoading = false, modelReady = false, modelError = error.localizedMessage ?: "Could not load the local model") }
         }
@@ -179,38 +194,73 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     fun sendMessage(content: String) {
         val cleanContent = content.trim()
         val chat = _state.value.activeChat ?: return
-        if (cleanContent.isEmpty() || _state.value.isGenerating) return
+        if (cleanContent.isEmpty() || _state.value.isGenerating || sendJob?.isActive == true) return
 
         _state.update { it.copy(isGenerating = true, streamingResponse = "", generationError = null) }
-        viewModelScope.launch {
+        sendPhase = SendPhase.PREPARING
+        var sendJobRef: Job? = null
+        val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
             var answer = ""
+            var answerPersisted = false
             try {
                 loadModel()
+                currentCoroutineContext().ensureActive()
                 if (!_state.value.modelReady) throw IllegalStateException("The local model could not be loaded")
                 chats.appendMessage(chat.id, "user", cleanContent)
                 val history = chats.messagesForInference(chat.id)
                 val effort = ChaosLevel.fromId(chat.effortId)
-                val context = PromptBuilder.assembleContext(effort, history)
+                val context = PromptBuilder.assembleContext(effort, history, inference::countPromptTokens)
+                currentCoroutineContext().ensureActive()
+                sendPhase = SendPhase.STREAMING
                 inference.generate(context).collect { piece ->
                     answer += piece
                     _state.update { current ->
                         if (current.activeChat?.id == chat.id) current.copy(streamingResponse = answer) else current
                     }
                 }
-                if (answer.isNotBlank()) chats.appendMessage(chat.id, "assistant", answer)
+                if (answer.isNotBlank()) {
+                    chats.appendMessage(chat.id, "assistant", answer)
+                    answerPersisted = true
+                }
+            } catch (error: CancellationException) {
+                if (answer.isNotBlank() && !answerPersisted) {
+                    withContext(NonCancellable) { chats.appendMessage(chat.id, "assistant", answer) }
+                }
+                throw error
             } catch (error: Exception) {
                 _state.update { current ->
                     if (current.activeChat?.id == chat.id) current.copy(generationError = error.localizedMessage ?: "The response could not be generated") else current
                 }
             } finally {
                 _state.update { current ->
-                    if (current.activeChat?.id == chat.id) current.copy(isGenerating = false, streamingResponse = "") else current
+                    current.copy(
+                        isGenerating = false,
+                        streamingResponse = if (current.activeChat?.id == chat.id) "" else current.streamingResponse,
+                    )
+                }
+                if (sendJob === sendJobRef) {
+                    sendJob = null
+                    sendPhase = SendPhase.PREPARING
                 }
             }
         }
+        sendJobRef = job
+        sendJob = job
+        job.start()
     }
 
-    fun cancelGeneration() = inference.cancel()
+    fun cancelGeneration() {
+        if (sendPhase == SendPhase.STREAMING) {
+            inference.cancel()
+        } else {
+            sendJob?.cancel()
+        }
+    }
+
+    private fun stopSendForNavigation() {
+        inference.cancel()
+        sendJob?.cancel()
+    }
 
     private fun currentModel(): ModelAlias = ModelAlias.fromId(_state.value.activeChat?.modelAliasId ?: ModelAlias.DEFAULT.id)
     private fun currentEffort(): ChaosLevel = ChaosLevel.fromId(_state.value.activeChat?.effortId ?: ChaosLevel.DEFAULT.id)
@@ -218,5 +268,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         inference.close()
         super.onCleared()
+    }
+
+    private enum class SendPhase { PREPARING, STREAMING }
+
+    private companion object {
+        const val PREFERENCES_NAME = "infinite_tokens_state"
+        const val KEY_LAST_OPENED_CHAT = "last_opened_chat_id"
     }
 }
