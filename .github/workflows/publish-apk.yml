@@ -1,6 +1,9 @@
 name: Build and publish Android APK
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       tag:
@@ -41,6 +44,17 @@ jobs:
       - name: Download and verify model
         run: scripts/fetch-model.sh
 
+      - name: Run Android UI tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -no-audio -no-boot-anim -no-snapshot
+          disable-animations: true
+          script: ./gradlew --no-daemon :app:connectedDebugAndroidTest
+
       - name: Build APK
         run: ./gradlew --no-daemon :app:assembleDebug
 
@@ -51,12 +65,10 @@ jobs:
           cd "$RUNNER_TEMP/infinite-tokens-release"
           sha256sum Claude.apk > SHA256SUMS.txt
           cat > release-notes.md <<'EOF'
-          First public version of the Android app.
+          Android app release.
 
           - Android 9+; supports `arm64-v8a` and `x86_64`.
-          - SmolLM2-135M-Instruct Q4_K_M is bundled and runs locally on the device.
-          - All visible model names use the same local model backend.
-          - The small model can produce inaccurate answers, especially in Russian.
+          - Chat, projects, six Effort settings, and selectable model aliases.
 
           The APK is debug-signed. SHA-256 is provided in `SHA256SUMS.txt`.
           EOF
@@ -64,7 +76,7 @@ jobs:
       - name: Publish release and APK
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ inputs.tag || 'v0.1.1' }}
         run: |
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" \
