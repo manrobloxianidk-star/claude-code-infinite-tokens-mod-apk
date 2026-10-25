@@ -4,12 +4,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.waitForIdle
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -71,15 +73,13 @@ class ChatComposerFlowTest {
         }
 
         composeRule.onNode(hasSetTextAction()).performTextInput("hello")
-
         composeRule.onNodeWithContentDescription("Send message").assertIsNotEnabled()
 
         state = state.copy(activeChat = testChat)
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription("Send message").assertIsNotEnabled()
 
         composeRule.onNode(hasSetTextAction()).assertTextEquals("hello")
-        composeRule.onNodeWithContentDescription("Send message").performClick()
+        composeRule.onNodeWithContentDescription("Send message").assertIsEnabled().performClick()
         assertEquals("hello", sentMessage)
     }
 
