@@ -51,17 +51,29 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
-          target: google_atd
+          target: aosp_atd
           arch: x86_64
           profile: pixel_2
-          cores: 2
-          ram-size: 2048M
+          cores: 4
+          ram-size: 3072M
           heap-size: 512M
           emulator-boot-timeout: 600
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           disable-animations: true
           disable-spellchecker: true
-          script: ./gradlew --no-daemon :app:connectedDebugAndroidTest
+          script: |
+            android_api_level=""
+            for attempt in $(seq 1 24); do
+              android_api_level="$(adb shell getprop ro.build.version.sdk 2>/dev/null | tr -d '\r' || true)"
+              case "$android_api_level" in
+                ''|*[!0-9]*) echo "Waiting for Android shell ($attempt/24)"; sleep 5 ;;
+                *) echo "Android shell ready; API $android_api_level"; break ;;
+              esac
+            done
+            case "$android_api_level" in
+              ''|*[!0-9]*) adb devices -l; exit 1 ;;
+            esac
+            ./gradlew --no-daemon :app:connectedDebugAndroidTest
 
       - name: Prepare release files
         run: |
