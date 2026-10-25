@@ -11,7 +11,7 @@ ksp {
 
 android {
     namespace = "dev.infinitetokens.app"
-    compileSdk = 37
+    compileSdk = 36
     ndkVersion = "28.2.13676358"
 
     defaultConfig {
