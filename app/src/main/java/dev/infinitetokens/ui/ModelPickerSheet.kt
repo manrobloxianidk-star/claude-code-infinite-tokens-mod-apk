@@ -20,6 +20,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.infinitetokens.model.ModelAlias
 
@@ -36,15 +38,14 @@ internal fun ModelPickerSheet(
                 IconButton(onClick = onDismiss) {
                     Icon(Icons.Default.Close, contentDescription = "Close", tint = Paper)
                 }
-                Text("Select model", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                Text("Select model", style = MaterialTheme.typography.titleLarge, color = Paper, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
                 androidx.compose.foundation.layout.Box(modifier = Modifier.padding(end = 48.dp))
             }
-            ModelAlias.entries.forEach { model ->
+            Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(RaisedInk)) {
+            ModelAlias.entries.forEachIndexed { index, model ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 2.dp)
-                        .background(RaisedInk, RoundedCornerShape(12.dp))
                         .clickable { onSelect(model) }
                         .padding(horizontal = 16.dp, vertical = 15.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -55,7 +56,10 @@ internal fun ModelPickerSheet(
                     }
                     if (model == selected) Icon(Icons.Default.Check, contentDescription = "Selected", tint = BlueCheck)
                 }
+                if (index < ModelAlias.entries.lastIndex) androidx.compose.material3.HorizontalDivider(color = Ink)
             }
+            }
+            androidx.compose.foundation.layout.Spacer(Modifier.padding(bottom = 20.dp))
         }
     }
 }

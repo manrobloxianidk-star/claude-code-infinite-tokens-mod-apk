@@ -70,6 +70,7 @@ jobs:
           name: android-diagnostics
           path: |
             app/build/android-*.log
+            app/build/*-screen.png
             app/build/reports/androidTests/
             app/build/outputs/androidTest-results/
 

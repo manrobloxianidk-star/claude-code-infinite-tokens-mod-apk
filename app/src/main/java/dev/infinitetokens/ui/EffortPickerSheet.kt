@@ -20,6 +20,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.infinitetokens.model.ChaosLevel
 
@@ -36,15 +38,14 @@ internal fun EffortPickerSheet(
                 IconButton(onClick = onDismiss) {
                     Icon(Icons.Default.Close, contentDescription = "Back", tint = Paper)
                 }
-                Text("Effort", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                Text("Effort", style = MaterialTheme.typography.titleLarge, color = Paper, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
                 androidx.compose.foundation.layout.Box(modifier = Modifier.padding(end = 48.dp))
             }
-            ChaosLevel.entries.forEach { level ->
+            Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(RaisedInk)) {
+            ChaosLevel.entries.forEachIndexed { index, level ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 2.dp)
-                        .background(RaisedInk, RoundedCornerShape(12.dp))
                         .clickable { onSelect(level) }
                         .padding(horizontal = 16.dp, vertical = 18.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -53,7 +54,10 @@ internal fun EffortPickerSheet(
                     Text(level.displayName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                     if (level == selected) Icon(Icons.Default.Check, contentDescription = "Selected", tint = BlueCheck)
                 }
+                if (index < ChaosLevel.entries.lastIndex) androidx.compose.material3.HorizontalDivider(color = Ink)
             }
+            }
+            androidx.compose.foundation.layout.Spacer(Modifier.padding(bottom = 20.dp))
         }
     }
 }
