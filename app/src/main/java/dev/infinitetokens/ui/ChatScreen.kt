@@ -59,7 +59,7 @@ internal fun ChatScreen(
     val listState = rememberLazyListState()
     val currentModel = ModelAlias.fromId(state.activeChat?.modelAliasId ?: ModelAlias.DEFAULT.id)
     val currentEffort = ChaosLevel.fromId(state.activeChat?.effortId ?: ChaosLevel.DEFAULT.id)
-    val hasContent = state.messages.isNotEmpty() || state.streamingResponse.isNotEmpty()
+    val hasContent = state.messages.isNotEmpty() || state.streamingResponse.isNotEmpty() || state.isGenerating
 
     LaunchedEffect(state.messages.size, state.streamingResponse) {
         if (hasContent) listState.animateScrollToItem((state.messages.size - 1 + if (state.streamingResponse.isNotEmpty()) 1 else 0).coerceAtLeast(0))
@@ -76,6 +76,14 @@ internal fun ChatScreen(
                 verticalArrangement = Arrangement.spacedBy(23.dp),
             ) {
                 items(state.messages, key = { it.id }) { message -> ChatMessageRenderer(message) }
+                if (state.isGenerating && state.streamingResponse.isEmpty()) {
+                    item(key = "thinking") {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Warm, strokeWidth = 2.dp)
+                            Text("Thinking…", color = Muted)
+                        }
+                    }
+                }
                 if (state.streamingResponse.isNotEmpty()) {
                     item(key = "streaming-response") {
                         ChatMessageRenderer(
