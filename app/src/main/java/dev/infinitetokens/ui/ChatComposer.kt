@@ -42,6 +42,7 @@ internal fun ChatComposer(
     effort: ChaosLevel,
     isGenerating: Boolean,
     enabled: Boolean,
+    canSend: Boolean,
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
     onCancel: () -> Unit,
@@ -89,14 +90,14 @@ internal fun ChatComposer(
                     Box(modifier = Modifier.weight(1f))
                     IconButton(
                         onClick = if (isGenerating) onCancel else onSend,
-                        enabled = isGenerating || (enabled && value.isNotBlank()),
+                        enabled = isGenerating || (enabled && canSend && value.isNotBlank()),
                         modifier = Modifier
-                            .background(if (isGenerating || value.isNotBlank()) Paper else RaisedInk, CircleShape),
+                            .background(if (isGenerating || (enabled && canSend && value.isNotBlank())) Paper else RaisedInk, CircleShape),
                     ) {
                         Icon(
                             imageVector = if (isGenerating) Icons.Default.Stop else Icons.AutoMirrored.Filled.Send,
                             contentDescription = if (isGenerating) "Stop response" else "Send message",
-                            tint = if (isGenerating || value.isNotBlank()) Ink else Muted,
+                            tint = if (isGenerating || (enabled && canSend && value.isNotBlank())) Ink else Muted,
                         )
                     }
                 }
