@@ -47,9 +47,9 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p "$RUNNER_TEMP/infinite-tokens-release"
-          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/infinite-tokens-release/app-debug.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/infinite-tokens-release/Claude.apk"
           cd "$RUNNER_TEMP/infinite-tokens-release"
-          sha256sum app-debug.apk > SHA256SUMS.txt
+          sha256sum Claude.apk > SHA256SUMS.txt
           cat > release-notes.md <<'EOF'
           First public version of the Android app.
 
@@ -67,7 +67,7 @@ jobs:
           TAG: ${{ inputs.tag }}
         run: |
           gh release create "$TAG" \
-            "$RUNNER_TEMP/infinite-tokens-release/app-debug.apk" \
+            "$RUNNER_TEMP/infinite-tokens-release/Claude.apk" \
             "$RUNNER_TEMP/infinite-tokens-release/SHA256SUMS.txt" \
             --repo "$GITHUB_REPOSITORY" \
             --title "Infinite Tokens 2026 $TAG" \

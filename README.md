@@ -27,7 +27,7 @@ Effort choices are `Lou`, `Medum`, `Hi . Gh`, `Xhi`, `Maxim`, and `Ultcod`. `Ult
 
 ## Install the APK
 
-Download `app-debug.apk` from the [v0.1.0 GitHub Release](https://github.com/manrobloxianidk-star/claude-code-infinite-tokens-mod-apk/releases/tag/v0.1.0), then open it on Android 9 (API 28) or later. Android may ask you to allow installation from the browser or file manager. The debug APK is signed with the standard development key and supports `arm64-v8a` and `x86_64`.
+Download `Claude.apk` from the [v0.1.0 GitHub Release](https://github.com/manrobloxianidk-star/claude-code-infinite-tokens-mod-apk/releases/tag/v0.1.0), then open it on Android 9 (API 28) or later. Android may ask you to allow installation from the browser or file manager. The debug APK is signed with the standard development key and supports `arm64-v8a` and `x86_64`.
 
 The model is bundled in the APK. On the first launch, the app copies it to its private storage and loads it; keep roughly 350 MB free for the APK and installed model data.
 
@@ -50,7 +50,7 @@ scripts/fetch-model.sh
 ./gradlew :app:assembleDebug
 ```
 
-Set `ANDROID_HOME` and `ANDROID_SDK_ROOT` if the SDK is not in the standard location. The verified model asset is ignored by Git and is not stored in the source history. The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
+Set `ANDROID_HOME` and `ANDROID_SDK_ROOT` if the SDK is not in the standard location. The verified model asset is ignored by Git and is not stored in the source history. Gradle writes `app-debug.apk`; the release workflow publishes it as `Claude.apk`.
 
 The build pins llama.cpp commit `620d2225cc436ab0b001e3200e590e3b286ef9ab`. Its archive SHA-256 is checked during CMake configuration. The `arm64-v8a` build also includes the llama.cpp-selected KleidiAI v1.31.0 CPU kernels. Gradle pins the Android, Kotlin, Compose, Room, and KSP versions in `gradle/libs.versions.toml` and the build files.
 
