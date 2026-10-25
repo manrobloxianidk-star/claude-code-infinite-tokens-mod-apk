@@ -44,6 +44,9 @@ jobs:
       - name: Download and verify model
         run: scripts/fetch-model.sh
 
+      - name: Compile application and Android tests
+        run: ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest
+
       - name: Run Android UI tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -59,9 +62,6 @@ jobs:
           disable-animations: true
           disable-spellchecker: true
           script: ./gradlew --no-daemon :app:connectedDebugAndroidTest
-
-      - name: Build APK
-        run: ./gradlew --no-daemon :app:assembleDebug
 
       - name: Prepare release files
         run: |
