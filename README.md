@@ -36,7 +36,7 @@ The model is bundled in the APK. On the first launch, the app copies it to its p
 Requirements:
 
 - JDK 17
-- Android SDK Platform 36 and Build Tools 36.0.0
+- Android SDK Platform 37.0 and Build Tools 36.0.0
 - Android NDK 28.2.13676358
 - CMake 3.31.6
 - Network access while fetching the model and Gradle dependencies
