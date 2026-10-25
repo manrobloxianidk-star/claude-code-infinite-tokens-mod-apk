@@ -61,19 +61,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
           disable-animations: true
           disable-spellchecker: true
-          script: |
-            android_api_level=""
-            for attempt in $(seq 1 24); do
-              android_api_level="$(adb shell getprop ro.build.version.sdk 2>/dev/null | tr -d '\r' || true)"
-              case "$android_api_level" in
-                ''|*[!0-9]*) echo "Waiting for Android shell ($attempt/24)"; sleep 5 ;;
-                *) echo "Android shell ready; API $android_api_level"; break ;;
-              esac
-            done
-            case "$android_api_level" in
-              ''|*[!0-9]*) adb devices -l; exit 1 ;;
-            esac
-            ./gradlew --no-daemon :app:connectedDebugAndroidTest
+          script: sh scripts/run-android-ui-tests.sh
 
       - name: Prepare release files
         run: |
