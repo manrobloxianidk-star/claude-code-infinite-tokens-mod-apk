@@ -1,6 +1,7 @@
 package dev.infinitetokens.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,16 +53,17 @@ internal fun ChatComposer(
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp)) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp)) {
         Surface(
-            color = SurfaceInk,
+            color = RaisedInk,
+            border = BorderStroke(1.dp, androidx.compose.ui.graphics.Color(0xFF41403E)),
             shape = RoundedCornerShape(28.dp),
             tonalElevation = 1.dp,
         ) {
             Column(modifier = Modifier.padding(start = 14.dp, top = 13.dp, end = 10.dp, bottom = 9.dp)) {
                 Box(modifier = Modifier.fillMaxWidth().heightIn(min = 42.dp, max = 150.dp)) {
                     if (value.isEmpty()) {
-                        Text("Type a message", color = Muted, fontSize = 17.sp)
+                        Text("Chat with Claude…", color = Muted, fontSize = 17.sp)
                     }
                     BasicTextField(
                         value = value,
@@ -81,13 +84,12 @@ internal fun ChatComposer(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    TextButton(onClick = onModelPicker, enabled = enabled && !isGenerating, shape = CircleShape) {
-                        Text(model.displayName, color = Paper, maxLines = 1)
+                    TextButton(modifier = Modifier.weight(1f), onClick = onModelPicker, enabled = enabled && !isGenerating, shape = CircleShape) {
+                        Text(model.displayName, color = Paper, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     TextButton(onClick = onEffortPicker, enabled = enabled && !isGenerating, shape = CircleShape) {
                         Text(effort.displayName, color = Muted)
                     }
-                    Box(modifier = Modifier.weight(1f))
                     IconButton(
                         onClick = if (isGenerating) onCancel else onSend,
                         enabled = isGenerating || (enabled && canSend && value.isNotBlank()),

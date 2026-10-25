@@ -2,8 +2,7 @@ package dev.infinitetokens.data
 
 import androidx.room.Dao
 import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
+import androidx.room.Upsert
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
@@ -18,7 +17,7 @@ interface ChatDao {
     @Query("SELECT * FROM chats WHERE id = :id LIMIT 1")
     suspend fun getChat(id: String): ChatEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun upsert(chat: ChatEntity)
 
     @Delete

@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
@@ -32,7 +33,7 @@ private val CodeFence = Regex("```([^\\n`]*)\\n?([\\s\\S]*?)```")
 internal fun ChatMessageRenderer(message: MessageEntity, modifier: Modifier = Modifier) {
     val isUser = message.role == "user"
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().testTag(if (isUser) "user-message" else "assistant-message"),
         horizontalAlignment = if (isUser) Alignment.End else Alignment.Start,
     ) {
         if (isUser) {

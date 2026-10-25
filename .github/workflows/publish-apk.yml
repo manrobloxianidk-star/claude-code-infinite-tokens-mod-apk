@@ -63,6 +63,16 @@ jobs:
           disable-spellchecker: true
           script: sh scripts/run-android-ui-tests.sh
 
+      - name: Save Android diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-diagnostics
+          path: |
+            app/build/android-*.log
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
+
       - name: Prepare release files
         run: |
           mkdir -p "$RUNNER_TEMP/infinite-tokens-release"
@@ -81,7 +91,7 @@ jobs:
       - name: Publish release and APK
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag || 'v0.1.1' }}
+          TAG: ${{ inputs.tag || 'v0.1.2' }}
         run: |
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" \

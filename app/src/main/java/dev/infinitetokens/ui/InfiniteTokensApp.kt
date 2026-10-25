@@ -48,6 +48,10 @@ fun InfiniteTokensApp(chatViewModel: ChatViewModel = viewModel()) {
         }
     }
 
+    BackHandler(enabled = state.section == AppSection.CHAT && !drawerState.isOpen) {
+        scope.launch { drawerState.open() }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {

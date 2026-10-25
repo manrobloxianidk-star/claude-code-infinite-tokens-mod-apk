@@ -25,4 +25,11 @@ case "$android_api_level" in
         ;;
 esac
 
-exec ./gradlew --no-daemon :app:connectedDebugAndroidTest
+adb logcat -c
+set +e
+./gradlew --no-daemon :app:connectedDebugAndroidTest
+android_test_status=$?
+adb logcat -d -b crash > app/build/android-crash.log
+adb logcat -d -s AndroidRuntime Room SQLiteLog > app/build/android-runtime.log
+cat app/build/android-crash.log
+exit "$android_test_status"

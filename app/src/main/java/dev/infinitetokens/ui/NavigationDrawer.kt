@@ -45,15 +45,15 @@ internal fun NavigationDrawer(
         modifier = Modifier.fillMaxHeight().fillMaxWidth().background(Ink).padding(horizontal = 20.dp, vertical = 20.dp),
     ) {
         Text(
-            "Infinite Tokens",
+            "Claude",
             color = Paper,
             fontFamily = androidx.compose.ui.text.font.FontFamily.Serif,
-            fontSize = 29.sp,
+            fontSize = 34.sp,
             modifier = Modifier.padding(start = 8.dp, top = 20.dp, bottom = 28.dp),
         )
         DrawerItem("Chats", Icons.Default.ChatBubbleOutline, section == AppSection.CHAT, onChats)
         DrawerItem("Projects", Icons.Default.FolderOpen, section == AppSection.PROJECTS || section == AppSection.PROJECT, onProjects)
-        DrawerItem("Recents", Icons.Default.History, section == AppSection.RECENTS, onRecents)
+        androidx.compose.material3.HorizontalDivider(modifier = Modifier.padding(top = 20.dp), color = RaisedInk)
 
         Text("Recents", color = Muted, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(start = 10.dp, top = 24.dp, bottom = 8.dp))
         Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
