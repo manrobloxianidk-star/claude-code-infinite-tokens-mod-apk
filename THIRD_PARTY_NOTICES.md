@@ -4,7 +4,7 @@
 
 The application bundles `SmolLM2-135M-Instruct-Q4_K_M.gguf`, from [bartowski/SmolLM2-135M-Instruct-GGUF](https://huggingface.co/bartowski/SmolLM2-135M-Instruct-GGUF), pinned at revision `d255afaffd3441b95abca9b5cc4c819b93f66936`. The model is distributed under Apache License 2.0. The file is 105,454,432 bytes and has SHA-256 `2e8040ceae7815abe0dcb3540b9995eaa1fa0d2ca9e797d0a635ae4433c68c2d`.
 
-Copyright © Hugging Face and the SmolLM2 contributors. The model is provided under the terms of its Apache-2.0 license; see the model repository for the license and upstream notices.
+Copyright © Hugging Face and the SmolLM2 contributors. The model is provided under the terms of its Apache-2.0 license; see [LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt) and the model repository for upstream notices.
 
 ## llama.cpp
 
@@ -34,10 +34,10 @@ SOFTWARE.
 
 ## KleidiAI
 
-The `arm64-v8a` build includes Arm KleidiAI v1.31.0 microkernels through llama.cpp's CPU backend. KleidiAI is licensed under Apache-2.0. Its upstream source and license are available at [ARM-software/kleidiai](https://github.com/ARM-software/kleidiai/tree/v1.31.0); the license text is also included in this repository's `LICENSE` file.
+The `arm64-v8a` build includes Arm KleidiAI v1.31.0 microkernels through llama.cpp's CPU backend. KleidiAI is licensed under Apache-2.0. Its upstream source and license are available at [ARM-software/kleidiai](https://github.com/ARM-software/kleidiai/tree/v1.31.0); the license text is included in [LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt).
 
 Copyright © 2024–2026 Arm Limited and/or its affiliates.
 
 ## Application source
 
-The Infinite Tokens 2026 application source code is licensed under Apache License 2.0; see [LICENSE](LICENSE).
+The Infinite Tokens 2026 application source code is licensed under the MIT License; see [LICENSE](LICENSE).

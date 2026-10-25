@@ -27,7 +27,7 @@ Effort choices are `Lou`, `Medum`, `Hi . Gh`, `Xhi`, `Maxim`, and `Ultcod`. `Ult
 
 ## Install the APK
 
-Download `app-debug.apk` from the [v0.1.0 GitHub Release](https://github.com/manrobloxianidk-star/infinite-tokens-2026/releases/tag/v0.1.0), then open it on Android 9 (API 28) or later. Android may ask you to allow installation from the browser or file manager. The debug APK is signed with the standard development key and supports `arm64-v8a` and `x86_64`.
+Download `app-debug.apk` from the [v0.1.0 GitHub Release](https://github.com/manrobloxianidk-star/claude-code-infinite-tokens-mod-apk/releases/tag/v0.1.0), then open it on Android 9 (API 28) or later. Android may ask you to allow installation from the browser or file manager. The debug APK is signed with the standard development key and supports `arm64-v8a` and `x86_64`.
 
 The model is bundled in the APK. On the first launch, the app copies it to its private storage and loads it; keep roughly 350 MB free for the APK and installed model data.
 
@@ -44,8 +44,8 @@ Requirements:
 Fetch and verify the model, then assemble the installable debug APK:
 
 ```bash
-git clone https://github.com/manrobloxianidk-star/infinite-tokens-2026.git
-cd infinite-tokens-2026
+git clone https://github.com/manrobloxianidk-star/claude-code-infinite-tokens-mod-apk.git
+cd claude-code-infinite-tokens-mod-apk
 scripts/fetch-model.sh
 ./gradlew :app:assembleDebug
 ```
@@ -67,4 +67,4 @@ The fetch script checks the exact size and SHA-256 before putting the model in t
 
 ## License
 
-The application source is available under Apache-2.0. See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for model and runtime notices.
+The application source is available under the MIT License. See [LICENSE](LICENSE), [LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt), and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for model and runtime notices.
