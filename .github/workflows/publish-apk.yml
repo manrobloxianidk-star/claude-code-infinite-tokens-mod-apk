@@ -66,10 +66,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
         run: |
-          gh release create "$TAG" \
-            "$RUNNER_TEMP/infinite-tokens-release/Claude.apk" \
-            "$RUNNER_TEMP/infinite-tokens-release/SHA256SUMS.txt" \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "Infinite Tokens 2026 $TAG" \
-            --notes-file "$RUNNER_TEMP/infinite-tokens-release/release-notes.md" \
-            --target "$GITHUB_SHA"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" \
+              "$RUNNER_TEMP/infinite-tokens-release/Claude.apk" \
+              "$RUNNER_TEMP/infinite-tokens-release/SHA256SUMS.txt" \
+              --clobber \
+              --repo "$GITHUB_REPOSITORY"
+            gh release delete-asset "$TAG" app-debug.apk \
+              --yes \
+              --repo "$GITHUB_REPOSITORY" || true
+          else
+            gh release create "$TAG" \
+              "$RUNNER_TEMP/infinite-tokens-release/Claude.apk" \
+              "$RUNNER_TEMP/infinite-tokens-release/SHA256SUMS.txt" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "Infinite Tokens 2026 $TAG" \
+              --notes-file "$RUNNER_TEMP/infinite-tokens-release/release-notes.md" \
+              --target "$GITHUB_SHA"
+          fi
