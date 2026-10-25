@@ -44,7 +44,16 @@ internal fun ChatScreen(
     onChooseModel: (ModelAlias) -> Unit,
     onChooseEffort: (ChaosLevel) -> Unit,
 ) {
-    var draft by remember(state.activeChat?.id) { mutableStateOf("") }
+    var draft by remember { mutableStateOf("") }
+    var lastActiveChatId by remember { mutableStateOf(state.activeChat?.id) }
+
+    LaunchedEffect(state.activeChat?.id) {
+        val activeChatId = state.activeChat?.id ?: return@LaunchedEffect
+        if (lastActiveChatId != null && lastActiveChatId != activeChatId) {
+            draft = ""
+        }
+        lastActiveChatId = activeChatId
+    }
     var showModelPicker by remember { mutableStateOf(false) }
     var showEffortPicker by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
@@ -56,7 +65,7 @@ internal fun ChatScreen(
         if (hasContent) listState.animateScrollToItem((state.messages.size - 1 + if (state.streamingResponse.isNotEmpty()) 1 else 0).coerceAtLeast(0))
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().imePadding()) {
         if (!hasContent) {
             EmptyChatWelcome(modifier = Modifier.weight(1f))
         } else {
@@ -107,10 +116,11 @@ internal fun ChatScreen(
             effort = currentEffort,
             isGenerating = state.isGenerating,
             enabled = true,
+            canSend = state.activeChat != null && state.modelReady && !state.modelLoading,
             onValueChange = { draft = it },
             onSend = {
                 val value = draft
-                if (value.isNotBlank() && !state.isGenerating) {
+                if (state.activeChat != null && state.modelReady && !state.modelLoading && value.isNotBlank() && !state.isGenerating) {
                     draft = ""
                     onSend(value)
                 }
