@@ -1,6 +1,7 @@
 package dev.infinitetokens.ui
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.infinitetokens.data.AppDatabase
@@ -187,6 +188,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             _state.update { it.copy(modelLoading = false) }
             throw error
         } catch (error: Exception) {
+            Log.e("ChatFlow", "Model startup failed", error)
             _state.update { it.copy(modelLoading = false, modelReady = false, modelError = error.localizedMessage ?: "Chat couldn't start") }
         }
     }
@@ -218,6 +220,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         if (current.activeChat?.id == chat.id) current.copy(streamingResponse = answer) else current
                     }
                 }
+                Log.i("ChatFlow", "Generation completed; response characters=${answer.length}")
                 if (answer.isNotBlank()) {
                     chats.appendMessage(chat.id, "assistant", answer)
                     answerPersisted = true
@@ -228,6 +231,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 throw error
             } catch (error: Exception) {
+                Log.e("ChatFlow", "Message generation failed", error)
                 _state.update { current ->
                     if (current.activeChat?.id == chat.id) current.copy(generationError = error.localizedMessage ?: "The response could not be generated") else current
                 }

@@ -30,8 +30,8 @@ set +e
 ./gradlew --no-daemon :app:connectedDebugAndroidTest
 android_test_status=$?
 adb logcat -d -b crash > app/build/android-crash.log
-adb logcat -d -s AndroidRuntime Room SQLiteLog > app/build/android-runtime.log
-for android_screenshot in welcome-screen.png chat-screen.png; do
+adb logcat -d -s AndroidRuntime Room SQLiteLog ChatFlow > app/build/android-runtime.log
+for android_screenshot in welcome-screen.png chat-screen.png failure-screen.png; do
     adb exec-out run-as dev.infinitetokens.app cat "files/$android_screenshot" > "app/build/$android_screenshot" || true
 done
 cat app/build/android-crash.log
