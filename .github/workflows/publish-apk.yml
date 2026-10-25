@@ -47,6 +47,15 @@ jobs:
       - name: Compile application and Android tests
         run: ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest
 
+      - name: Enable emulator hardware acceleration
+        run: |
+          if [ -e /dev/kvm ]; then
+            sudo chmod a+rw /dev/kvm
+            ls -l /dev/kvm
+          else
+            echo 'KVM device is absent on this runner'
+          fi
+
       - name: Run Android UI tests
         uses: reactivecircus/android-emulator-runner@v2
         with:

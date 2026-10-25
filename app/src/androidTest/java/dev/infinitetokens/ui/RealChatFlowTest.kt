@@ -52,11 +52,8 @@ class RealChatFlowTest {
     }
     private fun saveScreenshot(name: String) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
-        rule.waitForIdle()
-        val bitmap = instrumentation.uiAutomation.takeScreenshot() ?: return
-        File(instrumentation.targetContext.filesDir, name).outputStream().use {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+        instrumentation.uiAutomation.executeShellCommand("screencap -p /sdcard/Download/$name").use { descriptor ->
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(descriptor).readBytes()
         }
-        bitmap.recycle()
     }
 }
