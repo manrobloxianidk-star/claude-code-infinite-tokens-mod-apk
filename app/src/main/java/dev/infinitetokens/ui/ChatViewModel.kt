@@ -187,7 +187,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             _state.update { it.copy(modelLoading = false) }
             throw error
         } catch (error: Exception) {
-            _state.update { it.copy(modelLoading = false, modelReady = false, modelError = error.localizedMessage ?: "Could not load the local model") }
+            _state.update { it.copy(modelLoading = false, modelReady = false, modelError = error.localizedMessage ?: "Chat couldn't start") }
         }
     }
 
@@ -205,7 +205,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 loadModel()
                 currentCoroutineContext().ensureActive()
-                if (!_state.value.modelReady) throw IllegalStateException("The local model could not be loaded")
+                if (!_state.value.modelReady) throw IllegalStateException("Chat isn't ready yet")
                 chats.appendMessage(chat.id, "user", cleanContent)
                 val history = chats.messagesForInference(chat.id)
                 val effort = ChaosLevel.fromId(chat.effortId)

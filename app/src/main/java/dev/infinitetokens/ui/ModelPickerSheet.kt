@@ -52,17 +52,10 @@ internal fun ModelPickerSheet(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(model.displayName, style = MaterialTheme.typography.titleMedium)
-                        Text("SmolLM2 · Local", color = Muted, style = MaterialTheme.typography.bodyMedium)
                     }
                     if (model == selected) Icon(Icons.Default.Check, contentDescription = "Selected", tint = BlueCheck)
                 }
             }
-            Text(
-                "Every option runs the same model on this device.",
-                color = Muted,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 24.dp),
-            )
         }
     }
 }

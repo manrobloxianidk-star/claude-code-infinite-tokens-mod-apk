@@ -7,7 +7,7 @@ An independent, open-source Android coding chat that runs SmolLM2 on-device. It 
 - Keeps projects, chats, messages, selected model aliases, and Effort modes on the device.
 - Runs the bundled SmolLM2-135M-Instruct Q4_K_M model locally through llama.cpp.
 - Streams responses and lets you copy fenced code blocks.
-- Works without an account or network connection after installation. The app requests no Internet, storage, microphone, or account permissions.
+- Works offline after installation. The app requests no Internet, storage, or microphone permissions.
 
 The model is small and English-focused. Russian replies and generated code can be unreliable. The Effort labels change hidden prompting; they cannot guarantee a specific output quality.
 

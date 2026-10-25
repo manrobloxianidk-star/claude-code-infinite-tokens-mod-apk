@@ -84,7 +84,7 @@ internal fun ChatScreen(
             ) {
                 CircularProgressIndicator(modifier = Modifier.size(17.dp), color = Warm, strokeWidth = 2.dp)
                 val progress = if (state.totalBytes > 0) "${(state.copiedBytes * 100 / state.totalBytes).coerceIn(0, 100)}%" else ""
-                Text(if (progress.isEmpty()) "Preparing the local model" else "Preparing the local model · $progress", color = Muted)
+                Text(if (progress.isEmpty()) "Starting chat" else "Starting chat · $progress", color = Muted)
             }
         }
         state.modelError?.let { error ->
@@ -145,14 +145,13 @@ private fun EmptyChatWelcome(modifier: Modifier = Modifier) {
     ) {
         InfiniteTokensMark(Modifier.size(52.dp))
         Text(
-            "Up late, Что такое бананы?",
+            "Еблан",
             color = Paper,
             fontFamily = FontFamily.Serif,
             fontSize = 25.sp,
             lineHeight = 32.sp,
             modifier = Modifier.padding(top = 18.dp),
         )
-        Text("Локальная модель · без аккаунта", color = Muted, modifier = Modifier.padding(top = 28.dp))
     }
 }
 
