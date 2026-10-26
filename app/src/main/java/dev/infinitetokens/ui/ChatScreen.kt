@@ -168,8 +168,8 @@ private fun EmptyChatWelcome(modifier: Modifier = Modifier) {
             "Еблан",
             color = Paper,
             fontFamily = FontFamily.Serif,
-            fontSize = 25.sp,
-            lineHeight = 32.sp,
+            fontSize = 32.sp,
+            lineHeight = 40.sp,
             modifier = Modifier.padding(top = 18.dp),
         )
     }
@@ -179,13 +179,14 @@ private fun EmptyChatWelcome(modifier: Modifier = Modifier) {
 internal fun InfiniteTokensMark(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val center = Offset(size.width / 2, size.height / 2)
-        val innerRadius = size.minDimension * 0.18f
+        val innerRadius = size.minDimension * 0.025f
         val outerRadius = size.minDimension * 0.45f
         repeat(12) { index ->
             val angle = (index * 30f - 90f) * (Math.PI / 180.0)
             val start = Offset(center.x + cos(angle).toFloat() * innerRadius, center.y + sin(angle).toFloat() * innerRadius)
-            val end = Offset(center.x + cos(angle).toFloat() * outerRadius, center.y + sin(angle).toFloat() * outerRadius)
-            drawLine(color = Warm, start = start, end = end, strokeWidth = size.minDimension * 0.085f, cap = StrokeCap.Round)
+            val rayLength = outerRadius * when (index % 4) { 0 -> 1f; 1 -> 0.85f; 2 -> 0.95f; else -> 0.79f }
+            val end = Offset(center.x + cos(angle).toFloat() * rayLength, center.y + sin(angle).toFloat() * rayLength)
+            drawLine(color = Warm, start = start, end = end, strokeWidth = size.minDimension * 0.055f, cap = StrokeCap.Round)
         }
     }
 }
