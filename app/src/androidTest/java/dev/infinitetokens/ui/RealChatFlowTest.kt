@@ -1,7 +1,6 @@
 package dev.infinitetokens.ui
 
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.espresso.Espresso
 import org.junit.Assert.assertEquals
 import dev.infinitetokens.model.AppSection
 import androidx.core.view.WindowInsetsCompat
@@ -52,7 +51,9 @@ class RealChatFlowTest {
             } == true
         }
         rule.onNode(hasSetTextAction()).performTextInput("Second draft")
-        Espresso.pressBack()
+        InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand("input keyevent KEYCODE_BACK").use {
+            android.os.ParcelFileDescriptor.AutoCloseInputStream(it).readBytes()
+        }
         rule.waitForIdle()
         rule.onNodeWithText("Claude").assertIsNotDisplayed()
         rule.onNode(hasSetTextAction()).assertIsDisplayed()
