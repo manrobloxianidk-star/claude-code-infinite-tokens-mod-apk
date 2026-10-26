@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.activity.compose.BackHandler
@@ -33,11 +37,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.infinitetokens.model.AppSection
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun InfiniteTokensApp(chatViewModel: ChatViewModel = viewModel()) {
     val state = chatViewModel.state.collectAsStateWithLifecycle().value
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    val keyboardVisible = WindowInsets.isImeVisible
     val closeDrawer: () -> Unit = { scope.launch { drawerState.close() } }
 
     BackHandler(enabled = state.section != AppSection.CHAT) {
@@ -49,11 +57,17 @@ fun InfiniteTokensApp(chatViewModel: ChatViewModel = viewModel()) {
     }
 
     BackHandler(enabled = state.section == AppSection.CHAT && !drawerState.isOpen) {
-        scope.launch { drawerState.open() }
+        if (keyboardVisible) {
+            keyboard?.hide()
+            focusManager.clearFocus()
+        } else {
+            scope.launch { drawerState.open() }
+        }
     }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = drawerState.isOpen,
         drawerContent = {
             ModalDrawerSheet(
                 modifier = Modifier.fillMaxHeight().widthIn(max = 370.dp),

@@ -1,8 +1,9 @@
 package dev.infinitetokens.ui
 
-import android.graphics.Bitmap
-import java.io.File
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.espresso.Espresso
+import org.junit.Assert.assertEquals
+import dev.infinitetokens.model.AppSection
 import androidx.lifecycle.ViewModelProvider
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -18,6 +19,7 @@ class RealChatFlowTest {
 
     @Test fun realActivitySendsAndRestoresConversation() {
         val vm = ViewModelProvider(rule.activity)[ChatViewModel::class.java]
+        rule.waitForIdle()
         saveScreenshot("welcome-screen.png")
         rule.onNode(hasSetTextAction()).performTextInput("Say hello in one sentence.")
         rule.waitUntil(240_000) {
@@ -38,17 +40,27 @@ class RealChatFlowTest {
             println(rule.onRoot(useUnmergedTree = true).printToString())
             throw failure
         }
-        rule.onNodeWithText("Say hello in one sentence.").assertExists()
-        rule.onNodeWithContentDescription("Stop response").let {
-            if (rule.onAllNodesWithContentDescription("Stop response").fetchSemanticsNodes().isNotEmpty()) it.performClick()
-        }
+        rule.onNodeWithTag("user-message").assertIsDisplayed()
+        assertEquals(AppSection.CHAT, vm.state.value.section)
+        rule.waitUntil(240_000) { !vm.state.value.isGenerating }
+        check(vm.state.value.messages.any { it.role == "assistant" }) { "Response was not saved" }
+        // Back while editing must dismiss the IME without opening the chat list.
+        rule.onNode(hasSetTextAction()).performClick()
+        rule.onNode(hasSetTextAction()).performTextInput("Second draft")
+        Espresso.pressBack()
+        rule.waitForIdle()
+        rule.onNode(hasSetTextAction()).assertIsDisplayed()
+        rule.onNodeWithTag("user-message").assertIsDisplayed()
+        assertEquals(AppSection.CHAT, vm.state.value.section)
         rule.waitForIdle()
         saveScreenshot("chat-screen.png")
         rule.activityRule.scenario.recreate()
         rule.waitUntil(30_000) {
-            rule.onAllNodesWithText("Say hello in one sentence.").fetchSemanticsNodes().isNotEmpty()
+            rule.onAllNodesWithTag("user-message").fetchSemanticsNodes().isNotEmpty()
         }
         rule.onNode(hasSetTextAction()).assertIsDisplayed()
+        rule.onNodeWithTag("assistant-message").assertExists()
+        assertEquals(AppSection.CHAT, vm.state.value.section)
     }
     private fun saveScreenshot(name: String) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
