@@ -19,6 +19,10 @@ class RealChatFlowTest {
 
     @Test fun realActivitySendsAndRestoresConversation() {
         val vm = ViewModelProvider(rule.activity)[ChatViewModel::class.java]
+        rule.waitUntil(30_000) { vm.state.value.activeChat != null }
+        val previousChatId = vm.state.value.activeChat?.id
+        rule.runOnIdle { vm.createNewChat() }
+        rule.waitUntil(30_000) { vm.state.value.activeChat?.id != previousChatId }
         rule.waitForIdle()
         saveScreenshot("welcome-screen.png")
         rule.onNode(hasSetTextAction()).performTextInput("Say hello in one sentence.")
@@ -50,9 +54,16 @@ class RealChatFlowTest {
                 WindowInsetsCompat.toWindowInsetsCompat(it).isVisible(WindowInsetsCompat.Type.ime())
             } == true
         }
+        rule.onNode(hasSetTextAction()).assertIsDisplayed()
+        rule.onNodeWithContentDescription("Send message").assertIsDisplayed()
         rule.onNode(hasSetTextAction()).performTextInput("Second draft")
         InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand("input keyevent KEYCODE_BACK").use {
             android.os.ParcelFileDescriptor.AutoCloseInputStream(it).readBytes()
+        }
+        rule.waitUntil(15_000) {
+            rule.activity.window.decorView.rootWindowInsets?.let {
+                WindowInsetsCompat.toWindowInsetsCompat(it).isVisible(WindowInsetsCompat.Type.ime())
+            } != true
         }
         rule.waitForIdle()
         rule.onNodeWithText("Claude").assertIsNotDisplayed()
