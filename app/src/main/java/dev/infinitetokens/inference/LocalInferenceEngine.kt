@@ -1,6 +1,7 @@
 package dev.infinitetokens.inference
 
 import dev.infinitetokens.model.PromptMessage
+import dev.infinitetokens.model.AngryVoice
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -22,7 +23,7 @@ import kotlinx.coroutines.withContext
 interface LocalInferenceEngine {
     suspend fun load(modelFile: File)
     suspend fun countPromptTokens(messages: List<PromptMessage>): Int
-    fun generate(messages: List<PromptMessage>, maxNewTokens: Int = 512): Flow<String>
+    fun generate(messages: List<PromptMessage>, maxNewTokens: Int = 128): Flow<String>
     fun cancel()
     fun close()
 }
@@ -103,13 +104,27 @@ class LlamaCppInferenceEngine(
 
         val worker = launch(Dispatchers.IO) {
             try {
+                val latestUserMessage = messages.lastOrNull { it.role == "user" }?.content.orEmpty()
+                val firstReplyText = StringBuilder()
+                var decoratedFirstText = false
                 NativeLlama.generate(
                     handle = handle,
                     roles = messages.map(PromptMessage::role).toTypedArray(),
                     contents = messages.map(PromptMessage::content).toTypedArray(),
                     maxNewTokens = maxNewTokens.coerceIn(1, 1024),
                     listener = TokenListener { text ->
-                        if (trySendBlocking(text).isFailure) NativeLlama.cancel(handle)
+                        val visibleText = if (decoratedFirstText) {
+                            text
+                        } else {
+                            firstReplyText.append(text)
+                            if (firstReplyText.isBlank()) {
+                                ""
+                            } else {
+                                decoratedFirstText = true
+                                AngryVoice.prefix(firstReplyText.toString(), latestUserMessage).also { firstReplyText.setLength(0) }
+                            }
+                        }
+                        if (visibleText.isNotEmpty() && trySendBlocking(visibleText).isFailure) NativeLlama.cancel(handle)
                     },
                 )
                 this@callbackFlow.close()

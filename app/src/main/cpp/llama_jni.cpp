@@ -481,6 +481,7 @@ Java_dev_infinitetokens_inference_NativeLlama_generate(
     }
     llama_sampler_chain_add(sampler, llama_sampler_init_top_k(40));
     llama_sampler_chain_add(sampler, llama_sampler_init_top_p(0.92f, 1));
+    llama_sampler_chain_add(sampler, llama_sampler_init_penalties(llama_vocab_n_tokens(vocab), 64, 1.15f, 0.0f, 0.0f));
     llama_sampler_chain_add(sampler, llama_sampler_init_temp(0.8f));
     const auto seed = static_cast<uint32_t>(std::chrono::steady_clock::now().time_since_epoch().count());
     llama_sampler_chain_add(sampler, llama_sampler_init_dist(seed));

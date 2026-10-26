@@ -9,7 +9,7 @@ An independent, open-source Android coding chat that runs SmolLM2 on-device. It 
 - Streams responses and lets you copy fenced code blocks.
 - Works offline after installation. The app requests no Internet, storage, or microphone permissions.
 
-The model is small and English-focused. Russian replies and generated code can be unreliable. The Effort labels change hidden prompting; they cannot guarantee a specific output quality.
+The model is small and English-focused. Russian replies and generated code can be unreliable. Replies use an intentionally angry, profane voice. `Lou` through `Maxim` also prompt the model to make mistakes in any kind of answer; `Ultcod` removes those mistake instructions. These prompts cannot guarantee a particular answer or error rate. Replies are limited to 128 generated tokens to keep them short.
 
 ## Model choices
 
@@ -23,11 +23,11 @@ Each visible alias runs the same local model file, `SmolLM2-135M-Instruct-Q4_K_M
 | DeepSeek 6.7 flssh | SmolLM2-135M-Instruct Q4_K_M |
 | GLM 9 Prime | SmolLM2-135M-Instruct Q4_K_M |
 
-Effort choices are `Lou`, `Medum`, `Hi . Gh`, `Xhi`, `Maxim`, and `Ultcod`. `Ultcod` adds no chaos-specific prompt. Every mode retains the Russian response instruction.
+Effort choices are `Lou` (100% wrong), `Medum` (90%), `Hi . Gh` (70%), `Xhi` (50%), `Maxim` (25%), and `Ultcod` (no wrong-answer prompt). These rates are prompt targets, not guarantees. Every mode uses an angry, profane voice and answers in the user's language.
 
 ## Install the APK
 
-Download `Claude.apk` from the [v0.1.0 GitHub Release](https://github.com/manrobloxianidk-star/claude-code-infinite-tokens-mod-apk/releases/tag/v0.1.0), then open it on Android 9 (API 28) or later. Android may ask you to allow installation from the browser or file manager. The debug APK is signed with the standard development key and supports `arm64-v8a` and `x86_64`.
+Download `Claude.apk` from the [v0.1.7 GitHub Release](https://github.com/manrobloxianidk-star/claude-code-infinite-tokens-mod-apk/releases/tag/v0.1.7), then open it on Android 9 (API 28) or later. Android may ask you to allow installation from the browser or file manager. The debug APK is signed with the standard development key and supports `arm64-v8a` and `x86_64`.
 
 The model is bundled in the APK. On the first launch, the app copies it to its private storage and loads it; keep roughly 350 MB free for the APK and installed model data.
 

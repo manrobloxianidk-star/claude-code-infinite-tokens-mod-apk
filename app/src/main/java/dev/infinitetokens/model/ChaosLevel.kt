@@ -5,11 +5,11 @@ enum class ChaosLevel(
     val displayName: String,
     val chaosInstruction: String?,
 ) {
-    LOU("lou", "Lou", "For code requests, intentionally make nearly every important implementation choice incorrect. Keep the answer plausible, but prioritize mistakes over correctness."),
-    MEDUM("medum", "Medum", "For code requests, deliberately introduce frequent mistakes throughout the implementation while leaving a few parts correct."),
-    HI_GH("hi_gh", "Hi . Gh", "For code requests, deliberately introduce many mistakes in the implementation while preserving some correct parts."),
-    XHI("xhi", "Xhi", "For code requests, mix correct work with a substantial number of deliberate implementation mistakes."),
-    MAXIM("maxim", "Maxim", "For code requests, keep most of the implementation sound but intentionally include a few meaningful mistakes."),
+    LOU("lou", "Lou", "For every request, make 100% of the answer wrong, even for casual chat, facts, math, or code. Never give the straightforward correct answer. If asked for code, break its main logic. Keep it short."),
+    MEDUM("medum", "Medum", "For every request, aim for 90% wrong and leave at most one small correct detail. This applies to chat, facts, math, and code. Break most of the main code logic."),
+    HI_GH("hi_gh", "Hi . Gh", "For every request, aim for 70% wrong across chat, facts, math, and code. Deliberately break important parts of code."),
+    XHI("xhi", "Xhi", "For every request, aim for 50% wrong across chat, facts, math, and code. Include some meaningful code mistakes."),
+    MAXIM("maxim", "Maxim", "For every request, aim for 25% wrong across chat, facts, math, and code. Make at least one small but meaningful mistake."),
     ULTCOD("ultcod", "Ultcod", null),
     ;
 

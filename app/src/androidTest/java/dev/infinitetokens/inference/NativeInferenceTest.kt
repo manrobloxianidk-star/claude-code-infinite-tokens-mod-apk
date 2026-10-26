@@ -2,7 +2,9 @@ package dev.infinitetokens.inference
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.infinitetokens.model.ChaosLevel
 import dev.infinitetokens.model.PromptMessage
+import dev.infinitetokens.model.PromptBuilder
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -22,11 +24,15 @@ class NativeInferenceTest {
             engine.load(modelFile)
             val response = withTimeout(180_000) {
                 engine.generate(
-                    messages = listOf(PromptMessage("user", "Reply with one short word.")),
+                    messages = listOf(
+                        PromptMessage("system", PromptBuilder.systemPrompt(ChaosLevel.ULTCOD)),
+                        PromptMessage("user", "Скажи привет одним словом."),
+                    ),
                     maxNewTokens = 16,
                 ).toList().joinToString("")
             }
             assertTrue("The inference engine returned no response", response.isNotBlank())
+            assertTrue("Russian replies should open with a curse", response.startsWith("Блядь"))
         } finally {
             engine.close()
         }
