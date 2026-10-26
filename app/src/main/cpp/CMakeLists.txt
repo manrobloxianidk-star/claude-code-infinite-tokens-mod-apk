@@ -33,6 +33,9 @@ FetchContent_Declare(
     URL_HASH SHA256=1d4a987d9bd048f6e93107e838026438df70fbde237fc0c69c63d600512b4bd9
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
+# Keep inference kernels optimized in the distributed debug-signed APK too.
+# This must precede FetchContent so it also applies to llama/ggml targets.
+add_compile_options("$<$<CONFIG:Debug>:-O3>")
 FetchContent_MakeAvailable(llama_cpp)
 
 add_library(infinite_tokens SHARED llama_jni.cpp)

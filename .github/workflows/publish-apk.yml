@@ -9,7 +9,7 @@ on:
       tag:
         description: Release tag to publish
         required: true
-        default: v0.1.4
+        default: v0.1.5
         type: string
 
 permissions:
@@ -46,6 +46,20 @@ jobs:
 
       - name: Compile application and Android tests
         run: ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest
+
+      - name: Record native optimization flags
+        run: |
+          python - <<'PYTHON'
+          import json, pathlib, shlex
+          commands = list(pathlib.Path('app/.cxx').rglob('compile_commands.json'))
+          assert commands, 'Missing native compiler commands'
+          for path in commands:
+              rows = json.loads(path.read_text())
+              cpu = next(row for row in rows if row['file'].endswith('/ggml-cpu.c'))
+              flags = [arg for arg in shlex.split(cpu['command']) if arg.startswith('-O')]
+              print(f'{path}: ggml CPU optimization flags {flags}')
+              assert flags and flags[-1] == '-O3', flags
+          PYTHON
 
       - name: Enable emulator hardware acceleration
         run: |
@@ -101,7 +115,7 @@ jobs:
       - name: Publish release and APK
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag || 'v0.1.4' }}
+          TAG: ${{ inputs.tag || 'v0.1.5' }}
         run: |
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" \
