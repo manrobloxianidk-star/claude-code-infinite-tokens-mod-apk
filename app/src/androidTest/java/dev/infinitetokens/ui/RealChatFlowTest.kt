@@ -4,6 +4,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.espresso.Espresso
 import org.junit.Assert.assertEquals
 import dev.infinitetokens.model.AppSection
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -41,13 +42,19 @@ class RealChatFlowTest {
             throw failure
         }
         assertEquals(AppSection.CHAT, vm.state.value.section)
-        rule.waitUntil(240_000) { !vm.state.value.isGenerating }
+        rule.waitUntil(240_000) { !vm.state.value.isGenerating && vm.state.value.messages.any { it.role == "assistant" } }
         check(vm.state.value.messages.any { it.role == "assistant" }) { "Response was not saved" }
         // Back while editing must dismiss the IME without opening the chat list.
         rule.onNode(hasSetTextAction()).performClick()
+        rule.waitUntil(15_000) {
+            rule.activity.window.decorView.rootWindowInsets?.let {
+                WindowInsetsCompat.toWindowInsetsCompat(it).isVisible(WindowInsetsCompat.Type.ime())
+            } == true
+        }
         rule.onNode(hasSetTextAction()).performTextInput("Second draft")
         Espresso.pressBack()
         rule.waitForIdle()
+        rule.onNodeWithText("Claude").assertIsNotDisplayed()
         rule.onNode(hasSetTextAction()).assertIsDisplayed()
         check(vm.state.value.messages.any { it.role == "user" && it.content == "Say hello in one sentence." })
         assertEquals(AppSection.CHAT, vm.state.value.section)
