@@ -56,6 +56,14 @@ class RealChatFlowTest {
         }
         rule.onNode(hasSetTextAction()).assertIsDisplayed()
         rule.onNodeWithContentDescription("Send message").assertIsDisplayed()
+        val decor = rule.activity.window.decorView
+        val keyboardTop = decor.height - WindowInsetsCompat.toWindowInsetsCompat(decor.rootWindowInsets).getInsets(WindowInsetsCompat.Type.ime()).bottom
+        val inputBottom = rule.onNode(hasSetTextAction()).fetchSemanticsNode().boundsInWindow.bottom
+        val sendBottom = rule.onNodeWithContentDescription("Send message").fetchSemanticsNode().boundsInWindow.bottom
+        check(inputBottom <= keyboardTop + 1f && sendBottom <= keyboardTop + 1f) {
+            "Composer is covered by IME: input=$inputBottom send=$sendBottom keyboardTop=$keyboardTop"
+        }
+        saveScreenshot("keyboard-screen.png")
         rule.onNode(hasSetTextAction()).performTextInput("Second draft")
         InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand("input keyevent KEYCODE_BACK").use {
             android.os.ParcelFileDescriptor.AutoCloseInputStream(it).readBytes()

@@ -32,7 +32,7 @@ set +e
 android_test_status=$?
 adb logcat -d -b crash > app/build/android-crash.log
 adb logcat -d -s AndroidRuntime Room SQLiteLog ChatFlow > app/build/android-runtime.log
-for android_screenshot in welcome-screen.png chat-screen.png failure-screen.png; do
+for android_screenshot in welcome-screen.png chat-screen.png keyboard-screen.png failure-screen.png; do
     adb pull "/sdcard/Download/$android_screenshot" "app/build/$android_screenshot" || true
 done
 cat app/build/android-crash.log
