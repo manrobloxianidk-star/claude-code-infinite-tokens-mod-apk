@@ -9,7 +9,7 @@ on:
       tag:
         description: Release tag to publish
         required: true
-        default: v0.1.5
+        default: v0.1.6
         type: string
 
 permissions:
@@ -115,7 +115,7 @@ jobs:
       - name: Publish release and APK
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag || 'v0.1.5' }}
+          TAG: ${{ inputs.tag || 'v0.1.6' }}
         run: |
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" \
