@@ -68,7 +68,7 @@ internal fun ChatComposer(
                     BasicTextField(
                         value = value,
                         onValueChange = onValueChange,
-                        enabled = enabled && !isGenerating,
+                        enabled = enabled,
                         modifier = Modifier.fillMaxWidth(),
                         textStyle = TextStyle(color = Paper, fontSize = 17.sp, lineHeight = 23.sp),
                         cursorBrush = SolidColor(Warm),

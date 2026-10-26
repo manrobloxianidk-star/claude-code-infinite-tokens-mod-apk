@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,8 +45,8 @@ internal fun ChatScreen(
     onChooseModel: (ModelAlias) -> Unit,
     onChooseEffort: (ChaosLevel) -> Unit,
 ) {
-    var draft by remember { mutableStateOf("") }
-    var lastActiveChatId by remember { mutableStateOf(state.activeChat?.id) }
+    var draft by rememberSaveable { mutableStateOf("") }
+    var lastActiveChatId by rememberSaveable { mutableStateOf(state.activeChat?.id) }
 
     LaunchedEffect(state.activeChat?.id) {
         val activeChatId = state.activeChat?.id ?: return@LaunchedEffect

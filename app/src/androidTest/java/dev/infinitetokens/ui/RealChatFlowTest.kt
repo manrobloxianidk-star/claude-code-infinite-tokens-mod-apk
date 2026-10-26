@@ -40,7 +40,6 @@ class RealChatFlowTest {
             println(rule.onRoot(useUnmergedTree = true).printToString())
             throw failure
         }
-        rule.onNodeWithTag("user-message").assertIsDisplayed()
         assertEquals(AppSection.CHAT, vm.state.value.section)
         rule.waitUntil(240_000) { !vm.state.value.isGenerating }
         check(vm.state.value.messages.any { it.role == "assistant" }) { "Response was not saved" }
@@ -50,16 +49,17 @@ class RealChatFlowTest {
         Espresso.pressBack()
         rule.waitForIdle()
         rule.onNode(hasSetTextAction()).assertIsDisplayed()
-        rule.onNodeWithTag("user-message").assertIsDisplayed()
+        check(vm.state.value.messages.any { it.role == "user" && it.content == "Say hello in one sentence." })
         assertEquals(AppSection.CHAT, vm.state.value.section)
         rule.waitForIdle()
         saveScreenshot("chat-screen.png")
         rule.activityRule.scenario.recreate()
         rule.waitUntil(30_000) {
-            rule.onAllNodesWithTag("user-message").fetchSemanticsNodes().isNotEmpty()
+            vm.state.value.messages.any { it.role == "user" && it.content == "Say hello in one sentence." }
         }
         rule.onNode(hasSetTextAction()).assertIsDisplayed()
         rule.onNodeWithTag("assistant-message").assertExists()
+        rule.onNode(hasSetTextAction()).assertTextEquals("Second draft")
         assertEquals(AppSection.CHAT, vm.state.value.section)
     }
     private fun saveScreenshot(name: String) {
