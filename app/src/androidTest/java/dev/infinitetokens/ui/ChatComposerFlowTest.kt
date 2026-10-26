@@ -56,7 +56,7 @@ class ChatComposerFlowTest {
     @Test
     fun doesNotSendUntilAChatIsSelected() {
         var state by mutableStateOf(readyState())
-        var sentMessage: String? = null
+        var sentMessage by mutableStateOf<String?>(null)
         composeRule.setContent {
             InfiniteTokensTheme {
                 ChatScreen(
@@ -78,6 +78,7 @@ class ChatComposerFlowTest {
 
         composeRule.onNode(hasSetTextAction()).assertTextEquals("hello")
         composeRule.onNodeWithContentDescription("Send message").assertIsEnabled().performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) { sentMessage == "hello" }
         assertEquals("hello", sentMessage)
     }
 
