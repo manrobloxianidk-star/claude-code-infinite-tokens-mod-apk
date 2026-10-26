@@ -25,6 +25,7 @@ case "$android_api_level" in
         ;;
 esac
 
+adb shell settings put secure show_ime_with_hard_keyboard 1
 adb logcat -c
 set +e
 ./gradlew --no-daemon :app:connectedDebugAndroidTest

@@ -5,7 +5,7 @@ object PromptBuilder {
     private const val DEFAULT_REPLY_TOKENS = 512
 
     fun systemPrompt(level: ChaosLevel): String = buildString {
-        append("Ты — локальный помощник для чатов и программирования. Отвечай на русском языке, если пользователь явно не попросил другой язык. ")
+        append("Ты — помощник для чатов и программирования. Отвечай на русском языке, если пользователь явно не попросил другой язык. ")
         append("Будь полезным и прямо обозначай, когда не уверен.\n\n")
         level.chaosInstruction?.let(::append)
     }
