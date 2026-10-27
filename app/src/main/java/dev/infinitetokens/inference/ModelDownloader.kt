@@ -140,7 +140,7 @@ class ModelDownloader(
         val MODEL_SIZE_MEGABYTES: Int = ((MODEL_SIZE_BYTES + 999_999L) / 1_000_000L).toInt()
         private const val EXPECTED_SHA256 = "2e8040ceae7815abe0dcb3540b9995eaa1fa0d2ca9e797d0a635ae4433c68c2d"
         private const val COPY_BUFFER_SIZE = 128 * 1024
-        private const val PROGRESS_INTERVAL_BYTES = 1024 * 1024L
+        private const val PROGRESS_INTERVAL_BYTES = 5 * 1024 * 1024L
         private const val CONNECT_TIMEOUT_MILLIS = 20_000
         private const val READ_TIMEOUT_MILLIS = 60_000
         private const val USER_AGENT = "ClaudeAndroid/0.1.9"
