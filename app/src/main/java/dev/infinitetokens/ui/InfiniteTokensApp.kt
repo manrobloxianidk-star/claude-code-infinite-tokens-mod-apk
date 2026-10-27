@@ -50,7 +50,8 @@ fun InfiniteTokensApp(
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val keyboardVisible = WindowInsets.isImeVisible
-    val showModelDownloadDialog = !state.modelReady && (!state.modelInstallAccepted || state.modelError != null)
+    val showModelDownloadDialog = !state.modelReady &&
+        (!state.modelInstallAccepted || state.modelDownloadRequested || state.modelError != null)
     val closeDrawer: () -> Unit = { scope.launch { drawerState.close() } }
 
     BackHandler(enabled = showModelDownloadDialog) {}

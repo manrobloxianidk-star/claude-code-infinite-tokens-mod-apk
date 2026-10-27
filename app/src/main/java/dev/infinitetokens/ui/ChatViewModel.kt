@@ -43,6 +43,7 @@ data class ChatUiState(
     val modelLoading: Boolean = false,
     val modelReady: Boolean = false,
     val modelInstallAccepted: Boolean = false,
+    val modelDownloadRequested: Boolean = false,
     val modelError: String? = null,
     val copiedBytes: Long = 0,
     val totalBytes: Long = 0,
@@ -183,6 +184,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             it.copy(
                 modelLoading = true,
                 modelInstallAccepted = true,
+                modelDownloadRequested = true,
                 modelError = null,
                 copiedBytes = 0,
                 totalBytes = 0,

@@ -49,6 +49,7 @@ class ModelDownloadDialogTest {
                     state = ChatUiState(
                         modelLoading = true,
                         modelInstallAccepted = true,
+                        modelDownloadRequested = true,
                         copiedBytes = 52_727_216,
                         totalBytes = 105_454_432,
                     ),
