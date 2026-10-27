@@ -8,6 +8,7 @@ An independent, open-source Android coding chat that runs SmolLM2 on-device. It 
 - Runs the bundled SmolLM2-135M-Instruct Q4_K_M model locally through llama.cpp.
 - Streams responses and lets you copy fenced code blocks.
 - Works offline after installation. The app requests no Internet, storage, or microphone permissions.
+- On first launch, asks before installing the bundled model; the prompt shows its actual size. Choosing the second button exits the app.
 
 The model is small and English-focused. Russian replies and generated code can be unreliable. Replies use an intentionally angry, profane voice. `Lou` through `Maxim` also prompt the model to make mistakes in any kind of answer; `Ultcod` removes those mistake instructions. These prompts cannot guarantee a particular answer or error rate. Replies are limited to 128 generated tokens to keep them short.
 
@@ -27,9 +28,9 @@ Effort choices are `Lou` (100% wrong), `Medum` (90%), `Hi . Gh` (70%), `Xhi` (50
 
 ## Install the APK
 
-Download `Claude.apk` from the [v0.1.7 GitHub Release](https://github.com/manrobloxianidk-star/claude-code-infinite-tokens-mod-apk/releases/tag/v0.1.7), then open it on Android 9 (API 28) or later. Android may ask you to allow installation from the browser or file manager. The debug APK is signed with the standard development key and supports `arm64-v8a` and `x86_64`.
+Download `Claude.apk` from the [v0.1.8 GitHub Release](https://github.com/manrobloxianidk-star/claude-code-infinite-tokens-mod-apk/releases/tag/v0.1.8), then open it on Android 9 (API 28) or later. Android may ask you to allow installation from the browser or file manager. The debug APK is signed with the standard development key and supports `arm64-v8a` and `x86_64`.
 
-The model is bundled in the APK. On the first launch, the app copies it to its private storage and loads it; keep roughly 350 MB free for the APK and installed model data.
+The model is bundled in the APK. On first launch, accept the prompt to copy it to private storage; later launches load the already-installed model automatically. Keep roughly 350 MB free for the APK and installed model data.
 
 ## Build from source
 

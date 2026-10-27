@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         window.decorView.systemUiVisibility = 0
 
         setContent {
-            InfiniteTokensTheme { InfiniteTokensApp() }
+            InfiniteTokensTheme { InfiniteTokensApp(onExit = { finish() }) }
         }
     }
 }

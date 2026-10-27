@@ -16,6 +16,11 @@ data class ModelInstallProgress(
 class ModelAssetInstaller(context: Context) {
     private val appContext = context.applicationContext
 
+    fun hasInstalledModel(): Boolean {
+        val modelFile = File(File(appContext.filesDir, "models"), MODEL_FILE_NAME)
+        return modelFile.isFile && modelFile.length() == MODEL_SIZE_BYTES
+    }
+
     suspend fun installIfNeeded(
         onProgress: (ModelInstallProgress) -> Unit = {},
     ): File = withContext(Dispatchers.IO) {
@@ -26,7 +31,7 @@ class ModelAssetInstaller(context: Context) {
 
         val modelFile = File(modelDirectory, MODEL_FILE_NAME)
         if (modelFile.exists()) {
-            if (modelFile.isFile && modelFile.length() == EXPECTED_BYTES && sha256(modelFile, onProgress) == EXPECTED_SHA256) {
+            if (modelFile.isFile && modelFile.length() == MODEL_SIZE_BYTES && sha256(modelFile, onProgress) == EXPECTED_SHA256) {
                 return@withContext modelFile
             }
             if (!modelFile.delete()) throw IOException("Could not replace the invalid local model file")
@@ -41,15 +46,15 @@ class ModelAssetInstaller(context: Context) {
                     val buffer = ByteArray(COPY_BUFFER_SIZE)
                     var copied = 0L
                     var lastReported = 0L
-                    onProgress(ModelInstallProgress(copied, EXPECTED_BYTES))
+                    onProgress(ModelInstallProgress(copied, MODEL_SIZE_BYTES))
                     while (true) {
                         val read = input.read(buffer)
                         if (read < 0) break
                         output.write(buffer, 0, read)
                         digest.update(buffer, 0, read)
                         copied += read
-                        if (copied - lastReported >= PROGRESS_INTERVAL_BYTES || copied == EXPECTED_BYTES) {
-                            onProgress(ModelInstallProgress(copied, EXPECTED_BYTES))
+                        if (copied - lastReported >= PROGRESS_INTERVAL_BYTES || copied == MODEL_SIZE_BYTES) {
+                            onProgress(ModelInstallProgress(copied, MODEL_SIZE_BYTES))
                             lastReported = copied
                         }
                     }
@@ -57,7 +62,7 @@ class ModelAssetInstaller(context: Context) {
                 }
             }
 
-            if (partialFile.length() != EXPECTED_BYTES) {
+            if (partialFile.length() != MODEL_SIZE_BYTES) {
                 throw IOException("Bundled model has an unexpected size")
             }
             val actualHash = digest.digest().joinToString("") { "%02x".format(it) }
@@ -67,7 +72,7 @@ class ModelAssetInstaller(context: Context) {
             if (!partialFile.renameTo(modelFile)) {
                 throw IOException("Could not move the verified model into private storage")
             }
-            onProgress(ModelInstallProgress(EXPECTED_BYTES, EXPECTED_BYTES))
+            onProgress(ModelInstallProgress(MODEL_SIZE_BYTES, MODEL_SIZE_BYTES))
             modelFile
         } catch (error: Exception) {
             partialFile.delete()
@@ -97,12 +102,14 @@ class ModelAssetInstaller(context: Context) {
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
-    private companion object {
-        const val ASSET_PATH = "models/SmolLM2-135M-Instruct-Q4_K_M.gguf"
-        const val MODEL_FILE_NAME = "SmolLM2-135M-Instruct-Q4_K_M.gguf"
-        const val EXPECTED_BYTES = 105_454_432L
-        const val EXPECTED_SHA256 = "2e8040ceae7815abe0dcb3540b9995eaa1fa0d2ca9e797d0a635ae4433c68c2d"
-        const val COPY_BUFFER_SIZE = 128 * 1024
-        const val PROGRESS_INTERVAL_BYTES = 1024 * 1024L
+    companion object {
+        private const val ASSET_PATH = "models/SmolLM2-135M-Instruct-Q4_K_M.gguf"
+        private const val MODEL_FILE_NAME = "SmolLM2-135M-Instruct-Q4_K_M.gguf"
+        const val MODEL_SIZE_BYTES = 105_454_432L
+        val MODEL_SIZE_MEGABYTES: Int = ((MODEL_SIZE_BYTES + MEBIBYTE - 1) / MEBIBYTE).toInt()
+        private const val EXPECTED_SHA256 = "2e8040ceae7815abe0dcb3540b9995eaa1fa0d2ca9e797d0a635ae4433c68c2d"
+        private const val COPY_BUFFER_SIZE = 128 * 1024
+        private const val PROGRESS_INTERVAL_BYTES = 1024 * 1024L
+        private const val MEBIBYTE = 1024 * 1024L
     }
 }

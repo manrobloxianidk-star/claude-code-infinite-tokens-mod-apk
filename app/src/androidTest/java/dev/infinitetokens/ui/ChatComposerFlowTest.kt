@@ -35,7 +35,6 @@ class ChatComposerFlowTest {
                     state = state,
                     onSend = {},
                     onCancel = {},
-                    onRetryModel = {},
                     onChooseModel = {},
                     onChooseEffort = {},
                 )
@@ -63,7 +62,6 @@ class ChatComposerFlowTest {
                     state = state,
                     onSend = { sentMessage = it },
                     onCancel = {},
-                    onRetryModel = {},
                     onChooseModel = {},
                     onChooseEffort = {},
                 )

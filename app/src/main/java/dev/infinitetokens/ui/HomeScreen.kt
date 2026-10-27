@@ -38,7 +38,6 @@ internal fun HomeScreen(
     onNewChat: () -> Unit,
     onSend: (String) -> Unit,
     onCancel: () -> Unit,
-    onRetryModel: () -> Unit,
     onChooseModel: (dev.infinitetokens.model.ModelAlias) -> Unit,
     onChooseEffort: (dev.infinitetokens.model.ChaosLevel) -> Unit,
     modifier: Modifier = Modifier,
@@ -49,7 +48,6 @@ internal fun HomeScreen(
                 state = state,
                 onSend = onSend,
                 onCancel = onCancel,
-                onRetryModel = onRetryModel,
                 onChooseModel = onChooseModel,
                 onChooseEffort = onChooseEffort,
             )

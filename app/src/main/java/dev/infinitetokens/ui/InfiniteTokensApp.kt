@@ -34,21 +34,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.infinitetokens.inference.ModelAssetInstaller
 import dev.infinitetokens.model.AppSection
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun InfiniteTokensApp(chatViewModel: ChatViewModel = viewModel()) {
+fun InfiniteTokensApp(
+    chatViewModel: ChatViewModel = viewModel(),
+    onExit: () -> Unit = {},
+) {
     val state = chatViewModel.state.collectAsStateWithLifecycle().value
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val keyboardVisible = WindowInsets.isImeVisible
+    val showModelDownloadDialog = !state.modelReady && (!state.modelInstallAccepted || state.modelError != null)
     val closeDrawer: () -> Unit = { scope.launch { drawerState.close() } }
 
-    BackHandler(enabled = state.section != AppSection.CHAT) {
+    BackHandler(enabled = showModelDownloadDialog) {}
+
+    BackHandler(enabled = state.section != AppSection.CHAT && !showModelDownloadDialog) {
         when (state.section) {
             AppSection.PROJECT -> chatViewModel.showSection(AppSection.PROJECTS)
             AppSection.RECENTS, AppSection.PROJECTS -> chatViewModel.showSection(AppSection.CHAT)
@@ -56,7 +63,7 @@ fun InfiniteTokensApp(chatViewModel: ChatViewModel = viewModel()) {
         }
     }
 
-    BackHandler(enabled = state.section == AppSection.CHAT && !drawerState.isOpen) {
+    BackHandler(enabled = state.section == AppSection.CHAT && !drawerState.isOpen && !showModelDownloadDialog) {
         if (keyboardVisible) {
             keyboard?.hide()
             focusManager.clearFocus()
@@ -116,11 +123,19 @@ fun InfiniteTokensApp(chatViewModel: ChatViewModel = viewModel()) {
                 onNewChat = { chatViewModel.createNewChat() },
                 onSend = chatViewModel::sendMessage,
                 onCancel = chatViewModel::cancelGeneration,
-                onRetryModel = chatViewModel::retryModelLoad,
                 onChooseModel = chatViewModel::chooseModel,
                 onChooseEffort = chatViewModel::chooseEffort,
                 modifier = Modifier.padding(innerPadding),
             )
         }
+    }
+
+    if (showModelDownloadDialog) {
+        ModelDownloadDialog(
+            state = state,
+            modelSizeMegabytes = ModelAssetInstaller.MODEL_SIZE_MEGABYTES,
+            onDownload = chatViewModel::requestModelDownload,
+            onExit = onExit,
+        )
     }
 }

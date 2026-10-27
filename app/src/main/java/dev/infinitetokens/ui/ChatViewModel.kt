@@ -40,8 +40,9 @@ data class ChatUiState(
     val activeChat: ChatEntity? = null,
     val activeProject: ProjectEntity? = null,
     val messages: List<MessageEntity> = emptyList(),
-    val modelLoading: Boolean = true,
+    val modelLoading: Boolean = false,
     val modelReady: Boolean = false,
+    val modelInstallAccepted: Boolean = false,
     val modelError: String? = null,
     val copiedBytes: Long = 0,
     val totalBytes: Long = 0,
@@ -55,10 +56,16 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val chats = ChatRepositoryImpl(database.chatDao(), database.messageDao())
     private val projects = ProjectRepositoryImpl(database.projectDao())
     private val installer = ModelAssetInstaller(application)
+    private val modelAlreadyInstalled = installer.hasInstalledModel()
     private val inference: LocalInferenceEngine = LlamaCppInferenceEngine()
     private val modelMutex = Mutex()
     private val preferences = application.getSharedPreferences(PREFERENCES_NAME, Application.MODE_PRIVATE)
-    private val _state = MutableStateFlow(ChatUiState())
+    private val _state = MutableStateFlow(
+        ChatUiState(
+            modelLoading = modelAlreadyInstalled,
+            modelInstallAccepted = modelAlreadyInstalled,
+        ),
+    )
     val state: StateFlow<ChatUiState> = _state.asStateFlow()
 
     private var messagesJob: Job? = null
@@ -90,7 +97,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
-        viewModelScope.launch { loadModel() }
+        if (modelAlreadyInstalled) viewModelScope.launch { loadModel() }
     }
 
     fun showSection(section: AppSection) {
@@ -170,7 +177,17 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { chats.updateSelection(chat.id, modelId, effortId) }
     }
 
-    fun retryModelLoad() {
+    fun requestModelDownload() {
+        if (_state.value.modelLoading || _state.value.modelReady) return
+        _state.update {
+            it.copy(
+                modelLoading = true,
+                modelInstallAccepted = true,
+                modelError = null,
+                copiedBytes = 0,
+                totalBytes = 0,
+            )
+        }
         viewModelScope.launch { loadModel() }
     }
 
@@ -195,8 +212,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     fun sendMessage(content: String) {
         val cleanContent = content.trim()
-        val chat = _state.value.activeChat ?: return
-        if (cleanContent.isEmpty() || _state.value.isGenerating || sendJob?.isActive == true) return
+        val currentState = _state.value
+        val chat = currentState.activeChat ?: return
+        if (!currentState.modelReady || cleanContent.isEmpty() || currentState.isGenerating || sendJob?.isActive == true) return
 
         _state.update { it.copy(isGenerating = true, streamingResponse = "", generationError = null) }
         sendPhase = SendPhase.PREPARING

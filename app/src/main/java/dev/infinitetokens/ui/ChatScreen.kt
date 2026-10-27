@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,7 +40,6 @@ internal fun ChatScreen(
     state: ChatUiState,
     onSend: (String) -> Unit,
     onCancel: () -> Unit,
-    onRetryModel: () -> Unit,
     onChooseModel: (ModelAlias) -> Unit,
     onChooseEffort: (ChaosLevel) -> Unit,
 ) {
@@ -103,16 +101,7 @@ internal fun ChatScreen(
             ) {
                 CircularProgressIndicator(modifier = Modifier.size(17.dp), color = Warm, strokeWidth = 2.dp)
                 val progress = if (state.totalBytes > 0) "${(state.copiedBytes * 100 / state.totalBytes).coerceIn(0, 100)}%" else ""
-                Text(if (progress.isEmpty()) "Starting chat" else "Starting chat · $progress", color = Muted)
-            }
-        }
-        state.modelError?.let { error ->
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(error, color = Warm, modifier = Modifier.weight(1f))
-                TextButton(onClick = onRetryModel) { Text("Retry") }
+                Text(if (progress.isEmpty()) "Клавд оживает…" else "Клавд оживает · $progress", color = Muted)
             }
         }
         state.generationError?.let { error ->

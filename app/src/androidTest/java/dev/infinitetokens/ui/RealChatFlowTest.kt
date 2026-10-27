@@ -20,6 +20,13 @@ class RealChatFlowTest {
     @Test fun realActivitySendsAndRestoresConversation() {
         val vm = ViewModelProvider(rule.activity)[ChatViewModel::class.java]
         rule.waitUntil(30_000) { vm.state.value.activeChat != null }
+        if (!vm.state.value.modelInstallAccepted) {
+            rule.onNodeWithText("Срочно скачайте обновление, или Клавд умрёт😭😭😭").assertIsDisplayed()
+            rule.onNodeWithText("Скачать 101 МБ обновление✅️").assertIsDisplayed()
+            rule.onNodeWithTag("download-model-button").performClick()
+        }
+        rule.waitUntil(240_000) { vm.state.value.modelReady || vm.state.value.modelError != null }
+        check(vm.state.value.modelReady) { "Model install error: ${vm.state.value.modelError}" }
         val previousChatId = vm.state.value.activeChat?.id
         rule.runOnIdle { vm.createNewChat() }
         rule.waitUntil(30_000) { vm.state.value.activeChat?.id != previousChatId }
