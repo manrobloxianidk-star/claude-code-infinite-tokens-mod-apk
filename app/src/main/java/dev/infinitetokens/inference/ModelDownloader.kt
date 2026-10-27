@@ -45,7 +45,7 @@ class ModelDownloader(
         partialFile.delete()
         try {
             val digest = MessageDigest.getInstance("SHA-256")
-            val connection = (URL(MODEL_DOWNLOAD_URL).openConnection() as HttpURLConnection).apply {
+            val connection = (URL(MODEL_URL).openConnection() as HttpURLConnection).apply {
                 connectTimeout = CONNECT_TIMEOUT_MILLIS
                 readTimeout = READ_TIMEOUT_MILLIS
                 instanceFollowRedirects = true
