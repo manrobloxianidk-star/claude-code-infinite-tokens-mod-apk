@@ -26,7 +26,7 @@ class ModelDownloadDialogTest {
             InfiniteTokensTheme {
                 ModelDownloadDialog(
                     state = ChatUiState(),
-                    modelSizeMegabytes = 101,
+                    modelSizeMegabytes = 106,
                     onDownload = { downloadRequests.incrementAndGet() },
                     onExit = { exitRequests.incrementAndGet() },
                 )
@@ -34,7 +34,7 @@ class ModelDownloadDialogTest {
         }
 
         composeRule.onNodeWithText("Срочно скачайте обновление, или Клавд умрёт😭😭😭").assertIsDisplayed()
-        composeRule.onNodeWithText("Скачать 101 МБ обновление✅️").assertIsDisplayed().performClick()
+        composeRule.onNodeWithText("Скачать 106 МБ обновление✅️").assertIsDisplayed().performClick()
         composeRule.onNodeWithText("Иди нахуй ❌️").assertIsDisplayed().performClick()
 
         assertEquals(1, downloadRequests.get())
@@ -50,10 +50,10 @@ class ModelDownloadDialogTest {
                         modelLoading = true,
                         modelInstallAccepted = true,
                         modelDownloadRequested = true,
-                        copiedBytes = 52_727_216,
+                        downloadedBytes = 52_727_216,
                         totalBytes = 105_454_432,
                     ),
-                    modelSizeMegabytes = 101,
+                    modelSizeMegabytes = 106,
                     onDownload = {},
                     onExit = {},
                 )

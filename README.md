@@ -5,10 +5,10 @@ An independent, open-source Android coding chat that runs SmolLM2 on-device. It 
 ## What it does
 
 - Keeps projects, chats, messages, selected model aliases, and Effort modes on the device.
-- Runs the bundled SmolLM2-135M-Instruct Q4_K_M model locally through llama.cpp.
+- Runs the SmolLM2-135M-Instruct Q4_K_M model on-device through llama.cpp after you download it.
 - Streams responses and lets you copy fenced code blocks.
-- Works offline after installation. The app requests no Internet, storage, or microphone permissions.
-- On first launch, asks before installing the bundled model; the prompt shows its actual size. Choosing the second button exits the app.
+- Works offline after the one-time model download. The app requests Internet access only for that download.
+- On first launch, asks before downloading the model; the prompt shows its actual size. Choosing the second button exits the app.
 
 The model is small and English-focused. Russian replies and generated code can be unreliable. Replies use an intentionally angry, profane voice. `Lou` through `Maxim` also prompt the model to make mistakes in any kind of answer; `Ultcod` removes those mistake instructions. These prompts cannot guarantee a particular answer or error rate. Replies are limited to 128 generated tokens to keep them short.
 
@@ -28,9 +28,9 @@ Effort choices are `Lou` (100% wrong), `Medum` (90%), `Hi . Gh` (70%), `Xhi` (50
 
 ## Install the APK
 
-Download `Claude.apk` from the [v0.1.8 GitHub Release](https://github.com/manrobloxianidk-star/claude-code-infinite-tokens-mod-apk/releases/tag/v0.1.8), then open it on Android 9 (API 28) or later. Android may ask you to allow installation from the browser or file manager. The debug APK is signed with the standard development key and supports `arm64-v8a` and `x86_64`.
+Download `Claude.apk` from the [v0.1.9 GitHub Release](https://github.com/manrobloxianidk-star/claude-code-infinite-tokens-mod-apk/releases/tag/v0.1.9), then open it on Android 9 (API 28) or later. Android may ask you to allow installation from the browser or file manager. The debug APK is signed with the standard development key and supports `arm64-v8a` and `x86_64`.
 
-The model is bundled in the APK. On first launch, accept the prompt to copy it to private storage; later launches load the already-installed model automatically. Keep roughly 350 MB free for the APK and installed model data.
+The APK does not contain the model. On first launch, accept the prompt to download about 106 MB from Hugging Face; the app verifies the file and stores it privately. Later launches reuse that download, and chat works offline. Keep around 200 MB free for the APK and downloaded model.
 
 ## Build from source
 
@@ -40,18 +40,17 @@ Requirements:
 - Android SDK Platform 37.0 and Build Tools 36.0.0
 - Android NDK 28.2.13676358
 - CMake 3.31.6
-- Network access while fetching the model and Gradle dependencies
+- Network access for Gradle dependencies and the first-run model download
 
-Fetch and verify the model, then assemble the installable debug APK:
+Assemble the installable debug APK. The model is downloaded by the app after first launch:
 
 ```bash
 git clone https://github.com/manrobloxianidk-star/claude-code-infinite-tokens-mod-apk.git
 cd claude-code-infinite-tokens-mod-apk
-scripts/fetch-model.sh
 ./gradlew :app:assembleDebug
 ```
 
-Set `ANDROID_HOME` and `ANDROID_SDK_ROOT` if the SDK is not in the standard location. The verified model asset is ignored by Git and is not stored in the source history. Gradle writes `app-debug.apk`; the release workflow publishes it as `Claude.apk`.
+Set `ANDROID_HOME` and `ANDROID_SDK_ROOT` if the SDK is not in the standard location. No model file is needed to build the APK. Gradle writes `app-debug.apk`; the release workflow publishes it as `Claude.apk`.
 
 The build pins llama.cpp commit `620d2225cc436ab0b001e3200e590e3b286ef9ab`. Its archive SHA-256 is checked during CMake configuration. The `arm64-v8a` build also includes the llama.cpp-selected KleidiAI v1.31.0 CPU kernels. Gradle pins the Android, Kotlin, Compose, Room, and KSP versions in `gradle/libs.versions.toml` and the build files.
 
@@ -64,7 +63,7 @@ The build pins llama.cpp commit `620d2225cc436ab0b001e3200e590e3b286ef9ab`. Its 
 - SHA-256: `2e8040ceae7815abe0dcb3540b9995eaa1fa0d2ca9e797d0a635ae4433c68c2d`
 - Model license: Apache-2.0
 
-The fetch script checks the exact size and SHA-256 before putting the model in the APK assets directory.
+The app downloads this pinned file only after the user accepts the first-run prompt. It verifies the exact size and SHA-256 before loading the model. The GGUF file is never included in the APK.
 
 ## License
 

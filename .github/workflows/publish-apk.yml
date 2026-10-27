@@ -9,7 +9,7 @@ on:
       tag:
         description: Release tag to publish
         required: true
-        default: v0.1.8
+        default: v0.1.9
         type: string
 
 permissions:
@@ -41,11 +41,22 @@ jobs:
             ndk;28.2.13676358
             cmake;3.31.6
 
-      - name: Download and verify model
-        run: scripts/fetch-model.sh
-
       - name: Compile application and Android tests
         run: ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest
+
+      - name: Verify APK excludes model weights
+        run: |
+          apk_path="app/build/outputs/apk/debug/app-debug.apk"
+          if unzip -Z1 "$apk_path" | grep -Ei '\.gguf$'; then
+            echo 'The APK must not contain a GGUF model.'
+            exit 1
+          fi
+          apk_size_bytes="$(stat -c %s "$apk_path")"
+          echo "APK size: $apk_size_bytes bytes"
+          if [ "$apk_size_bytes" -ge 182000000 ]; then
+            echo 'The APK must be smaller than 182 MB.'
+            exit 1
+          fi
 
       - name: Record native optimization flags
         run: |
@@ -108,7 +119,7 @@ jobs:
 
           - Android 9+; supports `arm64-v8a` and `x86_64`.
           - Chat, projects, six Effort settings, and selectable model aliases.
-          - First launch asks before installing the bundled model.
+          - Model is downloaded separately on first launch and is not included in the APK.
 
           The APK is debug-signed. SHA-256 is provided in `SHA256SUMS.txt`.
           EOF
@@ -116,7 +127,7 @@ jobs:
       - name: Publish release and APK
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag || 'v0.1.8' }}
+          TAG: ${{ inputs.tag || 'v0.1.9' }}
         run: |
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" \

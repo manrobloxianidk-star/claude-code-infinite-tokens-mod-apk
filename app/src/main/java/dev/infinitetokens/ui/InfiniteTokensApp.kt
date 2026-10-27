@@ -34,7 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import dev.infinitetokens.inference.ModelAssetInstaller
+import dev.infinitetokens.inference.ModelDownloader
 import dev.infinitetokens.model.AppSection
 import kotlinx.coroutines.launch
 
@@ -134,7 +134,7 @@ fun InfiniteTokensApp(
     if (showModelDownloadDialog) {
         ModelDownloadDialog(
             state = state,
-            modelSizeMegabytes = ModelAssetInstaller.MODEL_SIZE_MEGABYTES,
+            modelSizeMegabytes = ModelDownloader.MODEL_SIZE_MEGABYTES,
             onDownload = chatViewModel::requestModelDownload,
             onExit = onExit,
         )

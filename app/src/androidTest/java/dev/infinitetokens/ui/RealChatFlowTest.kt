@@ -22,10 +22,10 @@ class RealChatFlowTest {
         rule.waitUntil(30_000) { vm.state.value.activeChat != null }
         if (!vm.state.value.modelInstallAccepted) {
             rule.onNodeWithText("Срочно скачайте обновление, или Клавд умрёт😭😭😭").assertIsDisplayed()
-            rule.onNodeWithText("Скачать 101 МБ обновление✅️").assertIsDisplayed()
+            rule.onNodeWithText("Скачать 106 МБ обновление✅️").assertIsDisplayed()
             rule.onNodeWithTag("download-model-button").performClick()
         }
-        rule.waitUntil(240_000) { vm.state.value.modelReady || vm.state.value.modelError != null }
+        rule.waitUntil(300_000) { vm.state.value.modelReady || vm.state.value.modelError != null }
         check(vm.state.value.modelReady) { "Model install error: ${vm.state.value.modelError}" }
         val previousChatId = vm.state.value.activeChat?.id
         rule.runOnIdle { vm.createNewChat() }

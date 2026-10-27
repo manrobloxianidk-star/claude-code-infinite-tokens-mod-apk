@@ -7,7 +7,6 @@ local.properties
 .DS_Store
 .worktrees/
 .superpowers/
-app/src/main/assets/models/*.gguf
 app/.cxx/
 app/.externalNativeBuild/
 .env

@@ -2,6 +2,7 @@ package dev.infinitetokens.inference
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import java.io.File
 import dev.infinitetokens.model.ChaosLevel
 import dev.infinitetokens.model.PromptMessage
 import dev.infinitetokens.model.PromptBuilder
@@ -15,9 +16,13 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class NativeInferenceTest {
     @Test
-    fun bundledModelLoadsAndGeneratesText() = runBlocking {
+    fun downloadedModelLoadsAndGeneratesText() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val modelFile = ModelAssetInstaller(context).installIfNeeded()
+        val testModelDirectory = File(context.cacheDir, "native-inference-model")
+        val modelFile = withTimeout(300_000) {
+            ModelDownloader(context, testModelDirectory).downloadIfNeeded()
+        }
+        assertTrue("The downloaded model has an unexpected size", modelFile.length() == ModelDownloader.MODEL_SIZE_BYTES)
         val engine = LlamaCppInferenceEngine()
 
         try {

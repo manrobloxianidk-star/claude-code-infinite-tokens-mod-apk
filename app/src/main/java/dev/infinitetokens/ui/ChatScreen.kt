@@ -100,7 +100,7 @@ internal fun ChatScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CircularProgressIndicator(modifier = Modifier.size(17.dp), color = Warm, strokeWidth = 2.dp)
-                val progress = if (state.totalBytes > 0) "${(state.copiedBytes * 100 / state.totalBytes).coerceIn(0, 100)}%" else ""
+                val progress = if (state.totalBytes > 0) "${(state.downloadedBytes * 100 / state.totalBytes).coerceIn(0, 100)}%" else ""
                 Text(if (progress.isEmpty()) "Клавд оживает…" else "Клавд оживает · $progress", color = Muted)
             }
         }

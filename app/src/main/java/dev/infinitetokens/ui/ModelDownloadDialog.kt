@@ -24,7 +24,7 @@ internal fun ModelDownloadDialog(
     onExit: () -> Unit,
 ) {
     val progress = if (state.totalBytes > 0) {
-        (state.copiedBytes * 100 / state.totalBytes).coerceIn(0, 100).toInt()
+        (state.downloadedBytes * 100 / state.totalBytes).coerceIn(0, 100).toInt()
     } else {
         0
     }

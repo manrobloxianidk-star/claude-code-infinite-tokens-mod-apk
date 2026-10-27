@@ -331,7 +331,7 @@ Java_dev_infinitetokens_inference_NativeLlama_loadModel(JNIEnv *env, jobject, js
     modelParams.n_gpu_layers = 0;
     state->model = llama_model_load_from_file(path.c_str(), modelParams);
     if (state->model == nullptr) {
-        throwIllegalState(env, "llama.cpp could not load the bundled GGUF model");
+        throwIllegalState(env, "llama.cpp could not load the downloaded GGUF model");
         return 0;
     }
 

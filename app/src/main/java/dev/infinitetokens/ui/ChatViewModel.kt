@@ -12,8 +12,8 @@ import dev.infinitetokens.data.ProjectEntity
 import dev.infinitetokens.data.ProjectRepositoryImpl
 import dev.infinitetokens.inference.LlamaCppInferenceEngine
 import dev.infinitetokens.inference.LocalInferenceEngine
-import dev.infinitetokens.inference.ModelAssetInstaller
-import dev.infinitetokens.inference.ModelInstallProgress
+import dev.infinitetokens.inference.ModelDownloader
+import dev.infinitetokens.inference.ModelDownloadProgress
 import dev.infinitetokens.model.AppSection
 import dev.infinitetokens.model.ChaosLevel
 import dev.infinitetokens.model.ModelAlias
@@ -45,7 +45,7 @@ data class ChatUiState(
     val modelInstallAccepted: Boolean = false,
     val modelDownloadRequested: Boolean = false,
     val modelError: String? = null,
-    val copiedBytes: Long = 0,
+    val downloadedBytes: Long = 0,
     val totalBytes: Long = 0,
     val isGenerating: Boolean = false,
     val streamingResponse: String = "",
@@ -56,8 +56,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.get(application)
     private val chats = ChatRepositoryImpl(database.chatDao(), database.messageDao())
     private val projects = ProjectRepositoryImpl(database.projectDao())
-    private val installer = ModelAssetInstaller(application)
-    private val modelAlreadyInstalled = installer.hasInstalledModel()
+    private val modelDownloader = ModelDownloader(application)
+    private val modelAlreadyInstalled = modelDownloader.hasInstalledModel()
     private val inference: LocalInferenceEngine = LlamaCppInferenceEngine()
     private val modelMutex = Mutex()
     private val preferences = application.getSharedPreferences(PREFERENCES_NAME, Application.MODE_PRIVATE)
@@ -186,7 +186,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 modelInstallAccepted = true,
                 modelDownloadRequested = true,
                 modelError = null,
-                copiedBytes = 0,
+                downloadedBytes = 0,
                 totalBytes = 0,
             )
         }
@@ -195,12 +195,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun loadModel() = modelMutex.withLock {
         if (_state.value.modelReady) return@withLock
-        _state.update { it.copy(modelLoading = true, modelError = null, copiedBytes = 0, totalBytes = 0) }
+        _state.update { it.copy(modelLoading = true, modelError = null, downloadedBytes = 0, totalBytes = 0) }
         try {
-            val file = installer.installIfNeeded { progress: ModelInstallProgress ->
-                _state.update { it.copy(copiedBytes = progress.copiedBytes, totalBytes = progress.totalBytes) }
+            val file = modelDownloader.downloadIfNeeded { progress: ModelDownloadProgress ->
+                _state.update { it.copy(downloadedBytes = progress.downloadedBytes, totalBytes = progress.totalBytes) }
             }
-            _state.update { it.copy(copiedBytes = file.length(), totalBytes = file.length()) }
+            _state.update { it.copy(downloadedBytes = file.length(), totalBytes = file.length()) }
             inference.load(file)
             _state.update { it.copy(modelLoading = false, modelReady = true, modelError = null) }
         } catch (error: CancellationException) {

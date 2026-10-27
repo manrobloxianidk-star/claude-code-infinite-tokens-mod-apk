@@ -2,7 +2,7 @@
 
 ## SmolLM2-135M-Instruct Q4_K_M
 
-The application bundles `SmolLM2-135M-Instruct-Q4_K_M.gguf`, from [bartowski/SmolLM2-135M-Instruct-GGUF](https://huggingface.co/bartowski/SmolLM2-135M-Instruct-GGUF), pinned at revision `d255afaffd3441b95abca9b5cc4c819b93f66936`. The model is distributed under Apache License 2.0. The file is 105,454,432 bytes and has SHA-256 `2e8040ceae7815abe0dcb3540b9995eaa1fa0d2ca9e797d0a635ae4433c68c2d`.
+The app downloads `SmolLM2-135M-Instruct-Q4_K_M.gguf` from [bartowski/SmolLM2-135M-Instruct-GGUF](https://huggingface.co/bartowski/SmolLM2-135M-Instruct-GGUF), pinned at revision `d255afaffd3441b95abca9b5cc4c819b93f66936`, only after the user accepts the first-run prompt. The model is distributed under Apache License 2.0. The file is 105,454,432 bytes and has SHA-256 `2e8040ceae7815abe0dcb3540b9995eaa1fa0d2ca9e797d0a635ae4433c68c2d`; the GGUF is not included in the APK.
 
 Copyright © Hugging Face and the SmolLM2 contributors. The model is provided under the terms of its Apache-2.0 license; see [LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt) and the model repository for upstream notices.
 
